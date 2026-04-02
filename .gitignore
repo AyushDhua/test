@@ -3,7 +3,7 @@ venv/
 .env
 
 # Uploaded Files (Do not commit user-uploaded images)
-
+uploads/
 
 # SQLite Database (Do not commit the live database)
 pigs.db
