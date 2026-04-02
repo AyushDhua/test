@@ -58,6 +58,11 @@ class Pig(db.Model):
 with app.app_context():
     db.create_all()
 
+
+@app.route("/")
+def home():
+    return "Server is LIVE 🚀"
+
 # Endpoint to upload pig data
 @app.route('/upload', methods=['POST'])
 def upload_pig():
