@@ -3,7 +3,7 @@
    Talks to Flask backend at BASE_URL
    ============================================================ */
 
-const BASE_URL = 'http://localhost:5001'; // ← change if deployed
+const BASE_URL = 'https://pigo-care-backend.onrender.com';
 
 /* ── UTILITIES ──────────────────────────────────────────────── */
 

@@ -7,7 +7,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for mobile app access
+CORS(app, origins=["*"])  # Allow all origins for production
 
 cloudinary.config(
     cloud_name=os.environ.get("CLOUD_NAME"),
