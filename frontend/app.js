@@ -46,11 +46,13 @@ function switchView(name) {
   $('topbar-title').textContent = views[name].title;
   // Hide the "Register Pig" button when already on that page
   $('topbar-add-btn').classList.toggle('hidden', name === 'register');
+  // Persist so browser reload returns to same view
+  localStorage.setItem('pigo_active_view', name);
 }
 
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', e => {
-    e.preventDefault();
+    e.preventDefault();  // stops href="#" from scrolling or reloading
     const v = item.dataset.view;
     if (v) {
       switchView(v);
@@ -60,6 +62,10 @@ document.querySelectorAll('.nav-item').forEach(item => {
 });
 
 $('topbar-add-btn').addEventListener('click', () => switchView('register'));
+
+// Restore last visited view on page load (prevents redirect to database on reload)
+const _savedView = localStorage.getItem('pigo_active_view');
+switchView(_savedView && views[_savedView] ? _savedView : 'registry');
 
 /* ── SIDEBAR MOBILE TOGGLE ──────────────────────────────────── */
 
@@ -104,20 +110,34 @@ let allPigs = [];
 let viewMode = 'grid'; // 'grid' | 'list'
 
 async function loadPigs() {
-  $('registry-loading').classList.remove('hidden');
-  $('registry-empty').classList.add('hidden');
-  $('pig-grid').innerHTML = '';
-  $('pig-grid').appendChild($('registry-loading'));
+  const loadingEl = $('registry-loading');
+  const emptyEl   = $('registry-empty');
+  const grid      = $('pig-grid');
+
+  loadingEl.classList.remove('hidden');
+  emptyEl.classList.add('hidden');
+  grid.innerHTML = '';
+  grid.appendChild(loadingEl);
+
+  // Show warm-up hint if request takes > 4s (Render cold start)
+  const warmupTimer = setTimeout(() => {
+    const p = loadingEl.querySelector('p');
+    if (p) p.textContent = 'Server is warming up, please wait…';
+  }, 4000);
 
   try {
-    const res  = await fetch(`${BASE_URL}/pigs`, { signal: AbortSignal.timeout(5000) });
+    const res = await fetch(`${BASE_URL}/pigs`, { signal: AbortSignal.timeout(35000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     allPigs = await res.json();
     renderPigs(allPigs);
     updateStats(allPigs);
   } catch (err) {
-    $('registry-loading').classList.add('hidden');
+    loadingEl.classList.add('hidden');
     showToast('Failed to load pigs: ' + err.message, 'error');
+  } finally {
+    clearTimeout(warmupTimer);
+    const p = loadingEl.querySelector('p');
+    if (p) p.textContent = 'Loading pigs…';
   }
 }
 
@@ -617,7 +637,7 @@ async function doSearch(q) {
   $('search-empty').classList.add('hidden');
 
   try {
-    const res  = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(q)}`);
+    const res  = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(35000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const pigs = await res.json();
 
