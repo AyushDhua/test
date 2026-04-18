@@ -264,14 +264,14 @@ $('registry-reload-btn').addEventListener('click', async () => {
   btn.classList.add('spinning');
   btn.disabled = true;
 
-  // Stop spinning after exactly one rotation
-  btn.querySelector('svg').addEventListener('animationend', () => {
+  try {
+    await loadPigs();
+    showToast('Database refreshed', 'success', 2000);
+  } finally {
+    // Always re-enable — don't rely on animationend which may not fire
     btn.classList.remove('spinning');
     btn.disabled = false;
-  }, { once: true });
-
-  await loadPigs();
-  showToast('Database refreshed', 'success', 2000);
+  }
 });
 
 /* Quick filter */
