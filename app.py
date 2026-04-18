@@ -9,11 +9,22 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 CORS(app, origins=["*"])  # Allow all origins for production
 
+CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME") or os.environ.get("CLOUD_NAME")
+CLOUDINARY_API_KEY    = os.environ.get("CLOUDINARY_API_KEY")    or os.environ.get("API_KEY")
+CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET") or os.environ.get("API_SECRET")
+
 cloudinary.config(
-    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME") or os.environ.get("CLOUD_NAME"),
-    api_key=os.environ.get("CLOUDINARY_API_KEY") or os.environ.get("API_KEY"),
-    api_secret=os.environ.get("CLOUDINARY_API_SECRET") or os.environ.get("API_SECRET")
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET
 )
+
+# Warn loudly if Cloudinary is not properly configured
+if not all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET]):
+    print("⚠️  WARNING: Cloudinary env vars are missing! Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET on Render.")
+else:
+    print(f"✅ Cloudinary configured — cloud: {CLOUDINARY_CLOUD_NAME}, key: {CLOUDINARY_API_KEY[:6]}***")
+
 
 # Configure PostgreSQL Database
 db_url = os.environ.get("DATABASE_URL")
@@ -67,6 +78,10 @@ def home():
 @app.route('/upload', methods=['POST'])
 def upload_pig():
     try:
+        # 0. Guard — Cloudinary must be configured
+        if not all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET]):
+            return jsonify({'error': 'Image upload service is not configured on the server. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Render environment variables.'}), 503
+
         # 1. Check if an image is part of the request
         if 'image' not in request.files:
             return jsonify({'error': 'No image file provided in request'}), 400
