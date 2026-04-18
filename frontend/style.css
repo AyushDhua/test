@@ -1270,6 +1270,18 @@ input::placeholder {
   margin-top: 8px;
 }
 
+.farm-address-section {
+  margin-top: 12px;
+}
+
+.farm-address-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
 .btn-spinner {
   width: 14px;
   height: 14px;

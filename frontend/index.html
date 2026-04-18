@@ -212,11 +212,15 @@
                   </div>
                 </div>
                 <!-- Auto-filled address chip (shown after selection) -->
-                <div class="farm-address-display hidden" id="farm-address-display"></div>
+                <div class="farm-address-section hidden" id="farm-address-section">
+                  <label class="farm-address-label">Farm Address</label>
+                  <div class="farm-address-display" id="farm-address-display"></div>
+                </div>
                 <!-- Other: custom name + address inputs -->
                 <div class="farm-other-wrap hidden" id="farm-other-wrap">
                   <input type="text" id="farm-other-name"    class="breed-other-input" placeholder="Enter farm name…"    autocomplete="off" />
-                  <input type="text" id="farm-other-address" class="breed-other-input" placeholder="Enter farm address…" autocomplete="off" style="margin-top:8px" />
+                  <label class="farm-address-label" style="margin-top:12px">Farm Address <span class="required">*</span></label>
+                  <input type="text" id="farm-other-address" class="breed-other-input" placeholder="Enter farm address…" autocomplete="off" />
                 </div>
                 <!-- Hidden inputs carry values to FormData -->
                 <input type="hidden" id="reg-farm-name"    name="farm_name" />

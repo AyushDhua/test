@@ -796,10 +796,13 @@ function selectFarm(farm) {
   farmTrigger.classList.add('has-value');
   farmTrigger.classList.remove('invalid');
 
+  const farmAddrSection = $('farm-address-section');
+
   if (farm.name === 'Other') {
     farmHiddenName.value  = '';
     farmHiddenAddr.value  = '';
-    farmAddrDisplay.classList.add('hidden');
+    if (farmAddrSection) farmAddrSection.classList.add('hidden');
+    farmAddrDisplay.textContent = '';
     farmOtherWrap.classList.remove('hidden');
     farmOtherName.value   = '';
     farmOtherAddress.value = '';
@@ -808,9 +811,9 @@ function selectFarm(farm) {
     farmHiddenName.value  = farm.name;
     farmHiddenAddr.value  = farm.address;
     farmOtherWrap.classList.add('hidden');
-    // Show auto-filled address
+    // Show auto-filled address with heading
     farmAddrDisplay.textContent = farm.address;
-    farmAddrDisplay.classList.remove('hidden');
+    if (farmAddrSection) farmAddrSection.classList.remove('hidden');
   }
   closeFarmPanel();
 }
@@ -847,7 +850,8 @@ function resetFarmDropdown() {
   farmHiddenName.value  = '';
   farmHiddenAddr.value  = '';
   farmTrigger.classList.remove('has-value', 'invalid', 'open');
-  farmAddrDisplay.classList.add('hidden');
+  const farmAddrSection = $('farm-address-section');
+  if (farmAddrSection) farmAddrSection.classList.add('hidden');
   farmAddrDisplay.textContent = '';
   farmOtherWrap.classList.add('hidden');
   farmOtherName.value    = '';
