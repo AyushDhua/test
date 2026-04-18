@@ -123,6 +123,8 @@ async function loadPigs() {
   const emptyEl   = $('registry-empty');
   const grid      = $('pig-grid');
 
+  // Guard: elements may not exist if called before DOM is ready
+  if (!loadingEl || !emptyEl || !grid) return;
   loadingEl.classList.remove('hidden');
   emptyEl.classList.add('hidden');
   grid.innerHTML = '';
@@ -690,4 +692,6 @@ async function doSearch(q) {
 
 /* ── INIT ────────────────────────────────────────────────────── */
 
-loadPigs();
+document.addEventListener('DOMContentLoaded', () => {
+  loadPigs();
+});
