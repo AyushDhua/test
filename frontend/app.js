@@ -33,7 +33,7 @@ function fmtDate(str) {
 /* ── NAVIGATION ─────────────────────────────────────────────── */
 
 const views = {
-  registry: { view: $('view-registry'), nav: $('nav-registry'), title: 'Pig Registry' },
+  registry: { view: $('view-registry'), nav: $('nav-registry'), title: 'Pig DataBase' },
   register: { view: $('view-register'),  nav: $('nav-register'),  title: 'Register New Pig'  },
   search:   { view: $('view-search'),    nav: $('nav-search'),    title: 'Search Pigs'   },
 };
@@ -110,7 +110,7 @@ async function loadPigs() {
   $('pig-grid').appendChild($('registry-loading'));
 
   try {
-    const res  = await fetch(`${BASE_URL}/pigs`);
+    const res  = await fetch(`${BASE_URL}/pigs`, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     allPigs = await res.json();
     renderPigs(allPigs);
@@ -220,6 +220,24 @@ $('list-btn').addEventListener('click', () => {
   $('list-btn').classList.add('active');
   $('grid-btn').classList.remove('active');
   renderPigs(filteredPigs());
+});
+
+/* Reload / refresh database */
+$('registry-reload-btn').addEventListener('click', async () => {
+  const btn = $('registry-reload-btn');
+  if (btn.classList.contains('spinning')) return; // prevent double-tap
+
+  btn.classList.add('spinning');
+  btn.disabled = true;
+
+  // Stop spinning after exactly one rotation
+  btn.querySelector('svg').addEventListener('animationend', () => {
+    btn.classList.remove('spinning');
+    btn.disabled = false;
+  }, { once: true });
+
+  await loadPigs();
+  showToast('Database refreshed', 'success', 2000);
 });
 
 /* Quick filter */

@@ -449,6 +449,18 @@ body {
   flex-wrap: wrap;
 }
 
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .quick-search {
   display: flex;
   align-items: center;
@@ -457,8 +469,7 @@ body {
   border: 1.5px solid var(--border);
   border-radius: var(--r-pill);
   padding: 0 18px;
-  flex: 1;
-  max-width: 300px;
+  width: 260px;
   box-shadow: var(--shadow-xs);
   transition: border-color var(--transition), box-shadow var(--transition);
 }
@@ -521,6 +532,36 @@ body {
   background: var(--bg-hover);
   color: var(--text-primary);
 }
+
+/* ── RELOAD BUTTON ───────────────────────────────────────────── */
+.reload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: background var(--transition), border-color var(--transition),
+              color var(--transition), box-shadow var(--transition);
+  flex-shrink: 0;
+}
+
+.reload-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.reload-btn.spinning svg {
+  animation: spin .65s cubic-bezier(.4, 0, .2, 1) 1 forwards;
+}
+
 
 /* ── PIG GRID ────────────────────────────────────────────────── */
 .pig-grid {
@@ -1031,7 +1072,7 @@ input::placeholder {
   border: 2px solid rgba(255, 255, 255, .4);
   border-top-color: #fff;
   border-radius: 50%;
-  animation: spin .7s linear infinite;
+  animation: spin .7s linear 1;
   flex-shrink: 0;
 }
 
