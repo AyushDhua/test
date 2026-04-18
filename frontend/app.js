@@ -601,7 +601,7 @@ regForm.addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
     showFeedback('reg-feedback', 'success', `✓ ${data.pig.pig_name} registered successfully!`);
-    showToast(`${data.pig.pig_name} added to registry!`, 'success');
+    showToast(`${data.pig.pig_name} added to database!`, 'success');
     regForm.reset();
     preview.classList.add('hidden');
     placeholder.classList.remove('hidden');
