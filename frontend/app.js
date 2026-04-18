@@ -119,21 +119,24 @@ let allPigs = [];
 let viewMode = 'grid'; // 'grid' | 'list'
 
 async function loadPigs() {
-  const loadingEl = $('registry-loading');
-  const emptyEl   = $('registry-empty');
-  const grid      = $('pig-grid');
+  const emptyEl = $('registry-empty');
+  const grid    = $('pig-grid');
 
-  // Guard: elements may not exist if called before DOM is ready
-  if (!loadingEl || !emptyEl || !grid) return;
-  loadingEl.classList.remove('hidden');
-  emptyEl.classList.add('hidden');
-  grid.innerHTML = '';
-  grid.appendChild(loadingEl);
+  // Guard: only needed on very first call before DOM is ready
+  if (!grid) return;
+
+  // Always create a fresh loading indicator (the old one gets wiped by renderPigs)
+  grid.innerHTML = `
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p id="loading-msg">Loading pigs…</p>
+    </div>`;
+  if (emptyEl) emptyEl.classList.add('hidden');
 
   // Show warm-up hint if request takes > 4s (Render cold start)
   const warmupTimer = setTimeout(() => {
-    const p = loadingEl.querySelector('p');
-    if (p) p.textContent = 'Server is warming up, please wait…';
+    const msg = document.getElementById('loading-msg');
+    if (msg) msg.textContent = 'Server is warming up, please wait…';
   }, 4000);
 
   try {
@@ -146,12 +149,10 @@ async function loadPigs() {
     renderPigs(allPigs);
     updateStats(allPigs);
   } catch (err) {
-    loadingEl.classList.add('hidden');
+    grid.innerHTML = '';
     showToast('Failed to load pigs: ' + err.message, 'error');
   } finally {
     clearTimeout(warmupTimer);
-    const p = loadingEl.querySelector('p');
-    if (p) p.textContent = 'Loading pigs…';
   }
 }
 
