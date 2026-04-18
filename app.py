@@ -11,7 +11,7 @@ CORS(app, origins=["*"])  # Allow all origins for production
 
 
 CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME") or os.environ.get("CLOUD_NAME")
-CLOUDINARY_API_KEY    = os.environ.get("CLOUDINARY_API_KEY")
+CLOUDINARY_API_KEY    = os.environ.get("CLOUDINARY_API_KEY")    or os.environ.get("API_KEY")
 CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET") or os.environ.get("API_SECRET")
 
 cloudinary.config(
