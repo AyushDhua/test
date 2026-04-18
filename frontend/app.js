@@ -5,6 +5,12 @@
 
 const BASE_URL = 'https://pigo-care-backend.onrender.com';
 
+/* ── API KEY ─────────────────────────────────────────────────
+   Shared secret sent as the x-api-key header on every request.
+   Must match the API_KEY environment variable on the backend.
+   ──────────────────────────────────────────────────────────── */
+const API_KEY = 'pigocare2024';
+
 /* ── UTILITIES ──────────────────────────────────────────────── */
 
 function $(id) { return document.getElementById(id); }
@@ -88,7 +94,10 @@ document.addEventListener('click', e => {
 
 async function checkServer() {
   try {
-    const r = await fetch(`${BASE_URL}/`, { signal: AbortSignal.timeout(4000) });
+    const r = await fetch(`${BASE_URL}/`, {
+      signal: AbortSignal.timeout(4000),
+      headers: { 'x-api-key': API_KEY },
+    });
     if (r.ok) {
       $('status-dot').className  = 'status-dot online';
       $('status-text').textContent = 'Server Online';
@@ -126,7 +135,10 @@ async function loadPigs() {
   }, 4000);
 
   try {
-    const res = await fetch(`${BASE_URL}/pigs`, { signal: AbortSignal.timeout(35000) });
+    const res = await fetch(`${BASE_URL}/pigs`, {
+      signal: AbortSignal.timeout(35000),
+      headers: { 'x-api-key': API_KEY },
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     allPigs = await res.json();
     renderPigs(allPigs);
@@ -440,7 +452,10 @@ async function saveEdit(pigId) {
   try {
     const res  = await fetch(`${BASE_URL}/update/${encodeURIComponent(pigId)}`, {
       method: 'POST',
+      headers: { 'x-api-key': API_KEY },
       body:   fd,
+      // NOTE: Do NOT set Content-Type manually for FormData —
+      // the browser sets it automatically with the correct multipart boundary.
     });
     const data = await res.json();
 
@@ -568,7 +583,13 @@ regForm.addEventListener('submit', async (e) => {
   fd.append('image',        fileInput.files[0]);
 
   try {
-    const res  = await fetch(`${BASE_URL}/upload`, { method: 'POST', body: fd });
+    const res  = await fetch(`${BASE_URL}/upload`, {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY },
+      body: fd,
+      // NOTE: Do NOT set Content-Type manually for FormData —
+      // the browser sets it automatically with the correct multipart boundary.
+    });
     const data = await res.json();
 
     if (res.status === 409) {
@@ -637,7 +658,10 @@ async function doSearch(q) {
   $('search-empty').classList.add('hidden');
 
   try {
-    const res  = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(35000) });
+    const res  = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(q)}`, {
+      signal: AbortSignal.timeout(35000),
+      headers: { 'x-api-key': API_KEY },
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const pigs = await res.json();
 

@@ -5,12 +5,30 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+from functools import wraps
 
 app = Flask(__name__)
 CORS(app, origins=["*"])  # Allow all origins for production
 
+# ── API KEY AUTH ─────────────────────────────────────────────────────────────
+# Set the API_KEY environment variable in Render to enable authentication.
+# The frontend must send the same value in every request as the x-api-key header.
+VALID_API_KEY = os.environ.get("API_KEY", "pigocare2024")
+
+@app.before_request
+def require_api_key():
+    """Reject any non-OPTIONS request that does not carry the correct API key."""
+    if request.method == "OPTIONS":
+        return  # Let CORS preflight pass through
+    if request.path == "/":  # health-check / server-status ping is unauthenticated
+        return
+    key = request.headers.get("x-api-key") or request.form.get("api_key") or request.args.get("api_key")
+    if key != VALID_API_KEY:
+        return jsonify({"error": "Invalid api_key"}), 401
+# ─────────────────────────────────────────────────────────────────────────────
+
 CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME") or os.environ.get("CLOUD_NAME")
-CLOUDINARY_API_KEY    = os.environ.get("CLOUDINARY_API_KEY")    or os.environ.get("API_KEY")
+CLOUDINARY_API_KEY    = os.environ.get("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET") or os.environ.get("API_SECRET")
 
 cloudinary.config(
