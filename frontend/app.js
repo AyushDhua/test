@@ -559,6 +559,101 @@ uploadZone.addEventListener('drop', e => {
   }
 });
 
+/* ── BREED SEARCHABLE DROPDOWN ──────────────────────────────── */
+
+const BREEDS = [
+  'Ankamali Pig', 'Banna Mini Pig', 'Berkshire', 'Chester White',
+  'Duroc', 'Fengjing', 'Ghungroo', 'Gori', 'Hampshire', 'Hereford Pig',
+  'Huai Pig', 'Jinhua', 'Landrace', 'Large Black', 'Large White (Yorkshire)',
+  'Meishan', 'Middle White', 'Min Pig', 'Mukota Pig', 'Niang Megha',
+  'Ossabaw Island Hog', 'Pietrain', 'Poland China', 'Spotted (Spots)',
+  'Tamworth', 'Tenyi Vo', 'Tibetan Pig', 'Vietnamese Pot-bellied Pig',
+  'Wuzhishan Pig', 'Xiang Pig', 'Zovawk',
+  'Other',
+];
+
+const breedDropdown   = $('breed-dropdown');
+const breedTrigger    = $('breed-trigger');
+const breedTriggerTxt = $('breed-trigger-text');
+const breedPanel      = $('breed-panel');
+const breedSearchEl   = $('breed-search');
+const breedList       = $('breed-list');
+const breedHidden     = $('reg-breed');
+const breedOtherInput = $('breed-other-input');
+
+function renderBreedList(filter = '') {
+  const q = filter.toLowerCase().trim();
+  breedList.innerHTML = '';
+  BREEDS.forEach(breed => {
+    if (q && !breed.toLowerCase().includes(q)) return;
+    const li = document.createElement('li');
+    li.className = 'breed-option' + (breed === 'Other' ? ' breed-other-marker' : '');
+    li.textContent = breed;
+    li.addEventListener('click', () => selectBreed(breed));
+    breedList.appendChild(li);
+  });
+  if (!breedList.children.length) {
+    const li = document.createElement('li');
+    li.className = 'breed-no-results';
+    li.textContent = 'No breeds found';
+    breedList.appendChild(li);
+  }
+}
+
+function selectBreed(breed) {
+  breedTriggerTxt.textContent = breed;
+  breedTrigger.classList.add('has-value');
+  breedTrigger.classList.remove('invalid');
+  if (breed === 'Other') {
+    breedHidden.value = '';
+    breedOtherInput.classList.remove('hidden');
+    breedOtherInput.value = '';
+    breedOtherInput.focus();
+  } else {
+    breedHidden.value = breed;
+    breedOtherInput.classList.add('hidden');
+    breedOtherInput.value = '';
+  }
+  closeBreedPanel();
+}
+
+breedOtherInput.addEventListener('input', () => {
+  breedHidden.value = breedOtherInput.value.trim();
+});
+
+function openBreedPanel() {
+  breedPanel.classList.remove('hidden');
+  breedSearchEl.value = '';
+  renderBreedList();
+  breedTrigger.classList.add('open');
+  setTimeout(() => breedSearchEl.focus(), 50);
+}
+
+function closeBreedPanel() {
+  breedPanel.classList.add('hidden');
+  breedTrigger.classList.remove('open');
+}
+
+breedTrigger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  breedPanel.classList.contains('hidden') ? openBreedPanel() : closeBreedPanel();
+});
+
+breedSearchEl.addEventListener('input', () => renderBreedList(breedSearchEl.value));
+
+document.addEventListener('click', (e) => {
+  if (!breedDropdown.contains(e.target)) closeBreedPanel();
+});
+
+function resetBreedDropdown() {
+  breedTriggerTxt.textContent = 'Select a breed…';
+  breedHidden.value = '';
+  breedTrigger.classList.remove('has-value', 'invalid', 'open');
+  breedOtherInput.classList.add('hidden');
+  breedOtherInput.value = '';
+  closeBreedPanel();
+}
+
 /* Reset */
 $('reg-reset').addEventListener('click', () => {
   regForm.reset();
@@ -567,13 +662,14 @@ $('reg-reset').addEventListener('click', () => {
   vaccDateWrap.style.display = 'none';
   $('reg-feedback').classList.add('hidden');
   regForm.querySelectorAll('input').forEach(el => el.classList.remove('invalid'));
+  resetBreedDropdown();
 });
 
 /* Submit */
 regForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const required = ['reg-pig-name', 'reg-dob', 'reg-breed', 'reg-farm-name', 'reg-farm-address'];
+  const required = ['reg-pig-name', 'reg-dob', 'reg-farm-name', 'reg-farm-address'];
   let valid = true;
 
   required.forEach(id => {
@@ -585,6 +681,14 @@ regForm.addEventListener('submit', async (e) => {
       el.classList.remove('invalid');
     }
   });
+
+  // Breed dropdown validation
+  if (!breedHidden.value.trim()) {
+    breedTrigger.classList.add('invalid');
+    valid = false;
+  } else {
+    breedTrigger.classList.remove('invalid');
+  }
 
   if (!fileInput.files[0]) {
     uploadZone.style.borderColor = 'var(--red)';

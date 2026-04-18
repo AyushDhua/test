@@ -169,9 +169,25 @@
                 <label for="reg-dob">Date of Birth <span class="required">*</span></label>
                 <input type="date" id="reg-dob" name="dob" required />
               </div>
-              <div class="form-field">
-                <label for="reg-breed">Breed <span class="required">*</span></label>
-                <input type="text" id="reg-breed" name="breed" placeholder="e.g. Yorkshire" required />
+              <div class="form-field breed-field-wrap">
+                <label>Breed <span class="required">*</span></label>
+                <div class="breed-dropdown" id="breed-dropdown">
+                  <button type="button" class="breed-trigger" id="breed-trigger">
+                    <span id="breed-trigger-text">Select a breed…</span>
+                    <svg class="breed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6,9 12,15 18,9"/></svg>
+                  </button>
+                  <div class="breed-panel hidden" id="breed-panel">
+                    <div class="breed-search-wrap">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <input type="text" id="breed-search" placeholder="Search breeds…" autocomplete="off" />
+                    </div>
+                    <ul class="breed-list" id="breed-list"></ul>
+                  </div>
+                </div>
+                <!-- Hidden input carries the actual value to FormData -->
+                <input type="hidden" id="reg-breed" name="breed" />
+                <!-- Shown only when 'Other' is selected -->
+                <input type="text" id="breed-other-input" class="breed-other-input hidden" placeholder="Enter breed name…" autocomplete="off" />
               </div>
             </div>
           </div>
