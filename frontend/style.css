@@ -1066,6 +1066,30 @@ input::placeholder {
   color: var(--red);
 }
 
+/* Auto-generated pig ID display in register form */
+.auto-id-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-page);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: .3px;
+  width: 100%;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  cursor: default;
+  user-select: none;
+}
+
+.auto-id-display::before {
+  content: '🔢';
+  font-size: 14px;
+}
+
 .btn-spinner {
   width: 14px;
   height: 14px;

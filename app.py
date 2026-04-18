@@ -75,6 +75,26 @@ with app.app_context():
 def home():
     return "Server is LIVE 🚀"
 
+def generate_pig_id():
+    """Generate a unique serial pig ID in format PC-YY-NNNN (e.g. PC-26-0001)."""
+    from datetime import datetime
+    year = datetime.now().strftime('%y')   # '26' for 2026
+    prefix = f'PC-{year}-'
+
+    # Find the highest serial number already used this year
+    existing = Pig.query.filter(Pig.pig_id.like(f'{prefix}%')).all()
+    max_serial = 0
+    for pig in existing:
+        try:
+            serial = int(pig.pig_id.replace(prefix, ''))
+            if serial > max_serial:
+                max_serial = serial
+        except ValueError:
+            pass
+
+    return f'{prefix}{max_serial + 1:04d}'
+
+
 # Endpoint to upload pig data
 @app.route('/upload', methods=['POST'])
 def upload_pig():
@@ -93,7 +113,6 @@ def upload_pig():
 
         # 2. Retrieve form data
         pig_name = request.form.get('pig_name')
-        pig_id = request.form.get('pig_id')
         dob = request.form.get('dob')
         farm_name = request.form.get('farm_name')
         farm_address = request.form.get('farm_address')
@@ -102,14 +121,12 @@ def upload_pig():
         vaccine_date = request.form.get('vaccine_date')
         breed = request.form.get('breed')
 
-        # 3. Validate required fields
-        if not all([pig_name, pig_id, dob, farm_name, farm_address, breed]):
+        # 3. Validate required fields (pig_id is auto-generated)
+        if not all([pig_name, dob, farm_name, farm_address, breed]):
             return jsonify({'error': 'Missing required fields'}), 400
 
-        # 4. Check for duplicate pig_id
-        existing_pig = Pig.query.filter_by(pig_id=pig_id).first()
-        if existing_pig:
-            return jsonify({'error': 'pig_id already exists'}), 409
+        # 4. Auto-generate a unique serial pig ID
+        pig_id = generate_pig_id()
 
         # 5. Save the image to Cloudinary
         result = cloudinary.uploader.upload(image_file)

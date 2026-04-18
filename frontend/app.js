@@ -573,7 +573,7 @@ $('reg-reset').addEventListener('click', () => {
 regForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const required = ['reg-pig-name', 'reg-pig-id', 'reg-dob', 'reg-breed', 'reg-farm-name', 'reg-farm-address'];
+  const required = ['reg-pig-name', 'reg-dob', 'reg-breed', 'reg-farm-name', 'reg-farm-address'];
   let valid = true;
 
   required.forEach(id => {
@@ -608,7 +608,6 @@ regForm.addEventListener('submit', async (e) => {
 
   const fd = new FormData();
   fd.append('pig_name',     $('reg-pig-name').value.trim());
-  fd.append('pig_id',       $('reg-pig-id').value.trim());
   fd.append('dob',          $('reg-dob').value);
   fd.append('breed',        $('reg-breed').value.trim());
   fd.append('farm_name',    $('reg-farm-name').value.trim());
@@ -627,14 +626,13 @@ regForm.addEventListener('submit', async (e) => {
     });
     const data = await res.json();
 
-    if (res.status === 409) {
-      $('reg-pig-id').classList.add('invalid');
-      throw new Error('A pig with this ID already exists.');
-    }
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-    showFeedback('reg-feedback', 'success', `✓ ${data.pig.pig_name} registered successfully!`);
-    showToast(`${data.pig.pig_name} added to database!`, 'success');
+    // Show the auto-generated ID prominently
+    const assignedId = data.pig.pig_id;
+    if ($('auto-id-display')) $('auto-id-display').textContent = `Auto-assigned on save`;
+    showFeedback('reg-feedback', 'success', `✓ ${data.pig.pig_name} registered — ID: ${assignedId}`);
+    showToast(`${data.pig.pig_name} added — ID: ${assignedId}`, 'success', 4500);
     regForm.reset();
     preview.classList.add('hidden');
     placeholder.classList.remove('hidden');
