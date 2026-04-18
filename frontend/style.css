@@ -1257,7 +1257,7 @@ input::placeholder {
 }
 
 .farm-address-display::before {
-  content: '📍';
+  content: '';
   font-style: normal;
   font-size: 13px;
   flex-shrink: 0;
