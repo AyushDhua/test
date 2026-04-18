@@ -388,12 +388,18 @@ function openPigModal(pig, editMode = false) {
           </div>
         </div>
 
-        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" id="modal-edit-cancel">Cancel</button>
-          <button class="btn btn-primary btn-sm" id="modal-save-btn">
-            <span id="modal-save-text">Save Changes</span>
-            <span class="btn-spinner hidden" id="modal-save-spinner"></span>
+        <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-danger btn-sm" id="modal-delete-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            Delete Pig
           </button>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" id="modal-edit-cancel">Cancel</button>
+            <button class="btn btn-primary btn-sm" id="modal-save-btn">
+              <span id="modal-save-text">Save Changes</span>
+              <span class="btn-spinner hidden" id="modal-save-spinner"></span>
+            </button>
+          </div>
         </div>
         <div class="form-feedback hidden" id="modal-edit-feedback"></div>
       </div>
@@ -408,6 +414,11 @@ function openPigModal(pig, editMode = false) {
 
   body.querySelector('#modal-edit-cancel').addEventListener('click', () => {
     $('modal-edit-section').classList.remove('open');
+  });
+
+  /* Delete */
+  body.querySelector('#modal-delete-btn').addEventListener('click', () => {
+    deletePig(pig.pig_id, pig.pig_name);
   });
 
   /* Save */
@@ -479,6 +490,27 @@ async function saveEdit(pigId) {
     saveBtn.disabled = false;
     saveText.textContent = 'Save Changes';
     saveSpinner.classList.add('hidden');
+  }
+}
+
+async function deletePig(pigId, pigName) {
+  const confirmed = window.confirm(`Delete "${pigName}"?\n\nThis cannot be undone.`);
+  if (!confirmed) return;
+
+  try {
+    const res  = await fetch(`${BASE_URL}/delete/${encodeURIComponent(pigId)}`, {
+      method: 'DELETE',
+      headers: { 'x-api-key': API_KEY },
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+    closeModal();
+    showToast(`${pigName} deleted from database.`, 'success');
+    await loadPigs();
+  } catch (err) {
+    showToast('Delete failed: ' + err.message, 'error');
   }
 }
 

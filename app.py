@@ -220,6 +220,23 @@ def search_pigs():
         return jsonify({'error': str(e)}), 500
 
 
+# Endpoint to delete a pig
+@app.route('/delete/<pig_id>', methods=['DELETE'])
+def delete_pig(pig_id):
+    try:
+        pig = Pig.query.filter_by(pig_id=pig_id).first()
+        if not pig:
+            return jsonify({'error': 'Pig not found'}), 404
+
+        db.session.delete(pig)
+        db.session.commit()
+
+        return jsonify({'message': f'{pig.pig_name} deleted successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     # Run the server on 0.0.0.0 so it's accessible from other devices on the network
     app.run(host='0.0.0.0', port=5001, debug=True)
