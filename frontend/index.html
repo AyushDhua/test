@@ -196,13 +196,31 @@
           <div class="form-section">
             <h3 class="form-section-title">Farm Details</h3>
             <div class="form-grid">
-              <div class="form-field">
-                <label for="reg-farm-name">Farm Name <span class="required">*</span></label>
-                <input type="text" id="reg-farm-name" name="farm_name" placeholder="e.g. Sunrise Farms" required />
-              </div>
-              <div class="form-field form-field--full">
-                <label for="reg-farm-address">Farm Address <span class="required">*</span></label>
-                <input type="text" id="reg-farm-address" name="farm_address" placeholder="e.g. 123 Meadow Lane, Iowa" required />
+              <div class="form-field breed-field-wrap" style="grid-column: 1 / -1">
+                <label>Farm Name <span class="required">*</span></label>
+                <div class="breed-dropdown" id="farm-dropdown">
+                  <button type="button" class="breed-trigger" id="farm-trigger">
+                    <span id="farm-trigger-text">Select a farm…</span>
+                    <svg class="breed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6,9 12,15 18,9"/></svg>
+                  </button>
+                  <div class="breed-panel hidden" id="farm-panel">
+                    <div class="breed-search-wrap">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <input type="text" id="farm-search" placeholder="Search farms…" autocomplete="off" />
+                    </div>
+                    <ul class="breed-list" id="farm-list"></ul>
+                  </div>
+                </div>
+                <!-- Auto-filled address chip (shown after selection) -->
+                <div class="farm-address-display hidden" id="farm-address-display"></div>
+                <!-- Other: custom name + address inputs -->
+                <div class="farm-other-wrap hidden" id="farm-other-wrap">
+                  <input type="text" id="farm-other-name"    class="breed-other-input" placeholder="Enter farm name…"    autocomplete="off" />
+                  <input type="text" id="farm-other-address" class="breed-other-input" placeholder="Enter farm address…" autocomplete="off" style="margin-top:8px" />
+                </div>
+                <!-- Hidden inputs carry values to FormData -->
+                <input type="hidden" id="reg-farm-name"    name="farm_name" />
+                <input type="hidden" id="reg-farm-address" name="farm_address" />
               </div>
             </div>
           </div>

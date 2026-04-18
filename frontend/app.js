@@ -654,6 +654,207 @@ function resetBreedDropdown() {
   closeBreedPanel();
 }
 
+/* ── FARM SEARCHABLE DROPDOWN ───────────────────────────────── */
+
+const FARMS = [
+  { name: 'A & A Piggery Farm',                                                    address: 'Id More, Sikidri, Ranchi, Jharkhand 835219, India' },
+  { name: 'AICRP on Pig – Assam Agricultural University Campus',                   address: 'Khanapara, Guwahati, Assam 781022, India' },
+  { name: 'AICRP on Pig – College of Veterinary Sciences, Agartala',               address: 'Agartala, Tripura 799006, India' },
+  { name: 'AICRP on Pig – College of Veterinary Sciences, Aizawl',                address: 'Aizawl, Mizoram 796015, India' },
+  { name: 'AICRP on Pig – College of Veterinary Sciences, Gangtok',               address: 'Gangtok, Sikkim 737102, India' },
+  { name: 'AICRP on Pig – College of Veterinary Sciences, Imphal',                address: 'Imphal, Manipur 795004, India' },
+  { name: 'AICRP on Pig – College of Veterinary Sciences, Itanagar',              address: 'Itanagar, Arunachal Pradesh 791111, India' },
+  { name: 'AICRP on Pig – ICAR-CCARI Campus',                                    address: 'Old Goa, Goa 403402, India' },
+  { name: 'AICRP on Pig – ICAR-CIARI Campus',                                    address: 'Port Blair, Andaman & Nicobar Islands 744101, India' },
+  { name: 'AICRP on Pig – ICAR-IVRI Campus',                                     address: 'Izatnagar, Bareilly, Uttar Pradesh 243122, India' },
+  { name: 'AICRP on Pig – ICAR-RCNEH Campus',                                    address: 'Umiam, Meghalaya 793103, India' },
+  { name: 'AICRP on Pig – Nagaland University, Medziphema Campus',               address: 'Dimapur, Nagaland 797106, India' },
+  { name: 'AICRP on Pig – West Bengal University of Animal & Fishery Sciences',   address: 'Mohanpur, Nadia, West Bengal 741252, India' },
+  { name: 'Ajit Pig Farm',                                                          address: 'Sankosai, Asura, West Singhbhum, Jharkhand 833202, India' },
+  { name: 'Anil Mahto Pig Farm',                                                    address: 'Madhaipur, Natundanga, Bardhaman, West Bengal 713381, India' },
+  { name: 'Ankush Pig Farms',                                                       address: 'Ghatkhed, Maharashtra 444602, India' },
+  { name: 'Aparna Agro',                                                            address: 'Near Ram Mandir, Laxmi Sagar, Bhubaneswar, Odisha, India' },
+  { name: 'Ashirwad Piggery Farm',                                                  address: 'Hill View Colony, Jamshedpur, Jharkhand, India' },
+  { name: 'Assam Agricultural University Pig Farm',                                 address: 'Khanapara, Guwahati, Assam 781022, India' },
+  { name: 'Atoz Farm',                                                              address: 'Sayestanagar, North 24 Parganas, West Bengal 743427, India' },
+  { name: 'Baba Pigry Farm',                                                        address: 'Punjab, India' },
+  { name: 'Barki Devi Pig Farm',                                                    address: 'NH19, Barakatha, Jharkhand, India' },
+  { name: 'Bethlehem Rabbit Farm & Agricultural (Pig Unit)',                        address: 'India' },
+  { name: 'Bihar Animal Sciences University Pig Farm',                              address: 'Patna, Bihar 800014, India' },
+  { name: 'Bishop Braddy Agro Farm',                                                address: 'Fatehpur, Uttar Pradesh 212652, India' },
+  { name: 'Bobby Piggery Farm',                                                     address: 'India' },
+  { name: 'Brothers Agriculture & Farming Company',                                 address: 'Bistupur, Jamshedpur, Jharkhand, India' },
+  { name: 'Budheswar Soren Pig Farm',                                               address: 'Mayurbhanj, Odisha 757040, India' },
+  { name: 'Ccube Pig Farm',                                                         address: 'Chokkasandra, Bengaluru, Karnataka 560099, India' },
+  { name: 'Chaudhary Pig Farm',                                                     address: 'Naraura, Bulandshahr, Uttar Pradesh, India' },
+  { name: 'Devsatya Farms Pvt Ltd',                                                 address: 'Farrukhabad, Uttar Pradesh 209601, India' },
+  { name: 'Diyan Livestock Pig Farm',                                               address: 'Village Kot, Dadri, Uttar Pradesh, India' },
+  { name: 'Dumbi Hembrom Pig Farm',                                                 address: 'West Singhbhum, Jharkhand, India' },
+  { name: 'Farmers Universe Pigg Farm',                                             address: 'Jharkhand, India' },
+  { name: 'Five Square Agro Pig Farm',                                              address: 'Raigarh, Chhattisgarh, India' },
+  { name: 'Gitanjali Farm (Pig Unit)',                                              address: 'India' },
+  { name: 'GK Farms (Pig Farming Unit)',                                            address: 'Coimbatore, Tamil Nadu, India' },
+  { name: 'Government Livestock Farm (Pig Unit)',                                   address: 'Hisar, Haryana 125004, India' },
+  { name: 'Government Pig Breeding Farm – Kanke',                                  address: 'Kanke, Ranchi, Jharkhand 834006, India' },
+  { name: 'Government Pig Breeding Farm – Khanapara',                              address: 'Khanapara, Guwahati, Assam 781022, India' },
+  { name: 'Government Pig Breeding Farm – Medziphema',                             address: 'Medziphema, Dimapur, Nagaland 797106, India' },
+  { name: 'Government Pig Farm – Agartala',                                        address: 'Agartala, Tripura 799001, India' },
+  { name: 'Government Pig Farm – Aizawl',                                          address: 'Aizawl, Mizoram 796001, India' },
+  { name: 'Government Pig Farm – Bhubaneswar',                                     address: 'Bhubaneswar, Odisha 751003, India' },
+  { name: 'Government Pig Farm – Byrnihat',                                        address: 'Byrnihat, Ri-Bhoi, Meghalaya 793101, India' },
+  { name: 'Government Pig Farm – Gangtok',                                         address: 'Gangtok, Sikkim 737101, India' },
+  { name: 'Government Pig Farm – Imphal',                                          address: 'Imphal, Manipur 795004, India' },
+  { name: 'Government Pig Farm – Itanagar',                                        address: 'Itanagar, Arunachal Pradesh 791111, India' },
+  { name: 'Government Pig Farm – Kalyani',                                         address: 'Kalyani, Nadia, West Bengal 741235, India' },
+  { name: 'Government Pig Farm – Patna',                                           address: 'Patna, Bihar 800014, India' },
+  { name: 'HOSH Farms Pig Unit',                                                    address: 'Vizianagaram, Andhra Pradesh 535006, India' },
+  { name: 'HPS Piggery Farm',                                                       address: 'Char Brahmanagar, Nadia, West Bengal 741301, India' },
+  { name: 'ICAR – CCARI Pig Unit',                                                 address: 'Ela, Old Goa, Goa 403402, India' },
+  { name: 'ICAR – CIARI Pig Farm',                                                 address: 'Port Blair, Andaman & Nicobar Islands 744101, India' },
+  { name: 'ICAR – ERS Pig Farm',                                                   address: 'Kalyani, Nadia, West Bengal 741235, India' },
+  { name: 'ICAR – IVRI Pig Farm',                                                  address: 'Izatnagar, Bareilly, Uttar Pradesh 243122, India' },
+  { name: 'ICAR – NRC on Pig',                                                     address: 'Rani, Guwahati, Kamrup, Assam 781131, India' },
+  { name: 'ICAR – RCNEH Pig Unit',                                                 address: 'Umiam, Barapani, Meghalaya 793103, India' },
+  { name: 'Irene Piggery',                                                          address: 'Lawngtlai, Mizoram, India' },
+  { name: 'Jaswant Pig Farm',                                                       address: 'Dhaulana, Ghaziabad, Uttar Pradesh, India' },
+  { name: 'JB Agro & Livestock',                                                    address: 'Nadia, West Bengal, India' },
+  { name: 'Joy Baba Lokenath Piggery Firm',                                         address: 'Bongaon, West Bengal 743245, India' },
+  { name: 'K.K Pig Breeding Farm & Training Centre',                                address: 'Ranchi, Jharkhand 835303, India' },
+  { name: 'Kaimur & Umang Piggery Group',                                           address: 'Bihar, India' },
+  { name: 'Kamboj Pig Farm',                                                        address: 'India' },
+  { name: 'Karnal Swine Breeding Farm',                                             address: 'Karnal, Haryana 132037, India' },
+  { name: 'Kerala Veterinary and Animal Sciences University Pig Farm',              address: 'Mannuthy, Thrissur, Kerala 680651, India' },
+  { name: 'Khushi Livestock Pig Farm',                                              address: 'India' },
+  { name: 'Maa Kali Pig Farm',                                                      address: 'North 24 Parganas, West Bengal, India' },
+  { name: 'Maa Piggery Bhollakash',                                                 address: 'Bhollakash, India' },
+  { name: 'Mina Pork Meat Pig Farm',                                                address: 'North 24 Parganas, West Bengal, India' },
+  { name: 'Mizoram University Pig Farm',                                            address: 'Aizawl, Mizoram 796004, India' },
+  { name: 'Monu Sree Pig Farm',                                                     address: 'Chakdaha, West Bengal 741248, India' },
+  { name: 'Murmu Enterprise Pig Farm',                                              address: 'Jharkhand, India' },
+  { name: 'Nagaland University Pig Farm',                                           address: 'Medziphema, Dimapur, Nagaland 797106, India' },
+  { name: 'Narsanda Pig Farm',                                                      address: 'Jharkhand, India' },
+  { name: 'Narsing Farm',                                                           address: 'Ranchi, Jharkhand, India' },
+  { name: 'New Jyoti Foundation Pig Farm',                                          address: 'Jharkhand, India' },
+  { name: 'Om Sai Piggery Farm',                                                    address: 'Jharkhand, India' },
+  { name: 'Padangka Livestock Farm',                                                address: 'Chukuniapara, Assam 781135, India' },
+  { name: 'Paras Farma Pig Unit',                                                   address: 'India' },
+  { name: 'Pig Farming Training & Research Institute of India Farm',                address: 'Helencha, Bongaon, West Bengal 743270, India' },
+  { name: 'Pradhan Pig Farming',                                                    address: 'Jamulanda, India' },
+  { name: 'Raghuvanshi Pig Farm',                                                   address: 'Noida, Uttar Pradesh 201304, India' },
+  { name: 'Raj Kumar Piggery Farm',                                                 address: 'Kamalpur, Punjab 147101, India' },
+  { name: 'Rana Pig Farm',                                                          address: 'Pindaura Jahangeerpur, India' },
+  { name: 'Sagar Livestock Pig Farm',                                               address: 'Yamunanagar, Haryana 135133, India' },
+  { name: 'Sai Agro Pig Farm',                                                      address: 'Daund, Maharashtra 412207, India' },
+  { name: 'SKUAST Pig Farm',                                                        address: 'Jammu, Jammu & Kashmir 180009, India' },
+  { name: 'Snow White Piggery',                                                     address: 'Jharkhand, India' },
+  { name: 'SS Piggery Farm',                                                        address: 'Majhola, Moradabad, Uttar Pradesh 244001, India' },
+  { name: 'Suvojit Pig Farm',                                                       address: 'Sayestanagar, North 24 Parganas, West Bengal, India' },
+  { name: 'Sure Farm Pig Unit',                                                     address: 'Dehradun, Uttarakhand 248002, India' },
+  { name: 'TANUVAS Pig Farm',                                                       address: 'Madhavaram, Chennai, Tamil Nadu 600051, India' },
+  { name: 'Tripura Veterinary College Pig Farm',                                    address: 'Agartala, Tripura 799006, India' },
+  { name: 'Universal Piggery',                                                      address: 'India' },
+  { name: 'Vikas Kumar Agro Livestock Farm',                                        address: 'Patna, Bihar, India' },
+  { name: 'Vikas Livestock Pig Farm',                                               address: 'Saharanpur, Uttar Pradesh 247001, India' },
+  { name: 'West Bengal University of Animal & Fishery Sciences Pig Farm',          address: 'Mohanpur, Nadia, West Bengal 741252, India' },
+  { name: 'Other', address: '' },
+];
+
+const farmDropdown      = $('farm-dropdown');
+const farmTrigger       = $('farm-trigger');
+const farmTriggerTxt    = $('farm-trigger-text');
+const farmPanel         = $('farm-panel');
+const farmSearchEl      = $('farm-search');
+const farmListEl        = $('farm-list');
+const farmHiddenName    = $('reg-farm-name');
+const farmHiddenAddr    = $('reg-farm-address');
+const farmAddrDisplay   = $('farm-address-display');
+const farmOtherWrap     = $('farm-other-wrap');
+const farmOtherName     = $('farm-other-name');
+const farmOtherAddress  = $('farm-other-address');
+
+function renderFarmList(filter = '') {
+  const q = filter.toLowerCase().trim();
+  farmListEl.innerHTML = '';
+  FARMS.forEach(farm => {
+    if (q && !farm.name.toLowerCase().includes(q)) return;
+    const li = document.createElement('li');
+    li.className = 'breed-option' + (farm.name === 'Other' ? ' breed-other-marker' : '');
+    li.textContent = farm.name;
+    li.addEventListener('click', () => selectFarm(farm));
+    farmListEl.appendChild(li);
+  });
+  if (!farmListEl.children.length) {
+    const li = document.createElement('li');
+    li.className = 'breed-no-results';
+    li.textContent = 'No farms found';
+    farmListEl.appendChild(li);
+  }
+}
+
+function selectFarm(farm) {
+  farmTriggerTxt.textContent = farm.name;
+  farmTrigger.classList.add('has-value');
+  farmTrigger.classList.remove('invalid');
+
+  if (farm.name === 'Other') {
+    farmHiddenName.value  = '';
+    farmHiddenAddr.value  = '';
+    farmAddrDisplay.classList.add('hidden');
+    farmOtherWrap.classList.remove('hidden');
+    farmOtherName.value   = '';
+    farmOtherAddress.value = '';
+    farmOtherName.focus();
+  } else {
+    farmHiddenName.value  = farm.name;
+    farmHiddenAddr.value  = farm.address;
+    farmOtherWrap.classList.add('hidden');
+    // Show auto-filled address
+    farmAddrDisplay.textContent = farm.address;
+    farmAddrDisplay.classList.remove('hidden');
+  }
+  closeFarmPanel();
+}
+
+farmOtherName.addEventListener('input',    () => { farmHiddenName.value = farmOtherName.value.trim(); });
+farmOtherAddress.addEventListener('input', () => { farmHiddenAddr.value = farmOtherAddress.value.trim(); });
+
+function openFarmPanel() {
+  farmPanel.classList.remove('hidden');
+  farmSearchEl.value = '';
+  renderFarmList();
+  farmTrigger.classList.add('open');
+  setTimeout(() => farmSearchEl.focus(), 50);
+}
+
+function closeFarmPanel() {
+  farmPanel.classList.add('hidden');
+  farmTrigger.classList.remove('open');
+}
+
+farmTrigger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  farmPanel.classList.contains('hidden') ? openFarmPanel() : closeFarmPanel();
+});
+
+farmSearchEl.addEventListener('input', () => renderFarmList(farmSearchEl.value));
+
+document.addEventListener('click', (e) => {
+  if (!farmDropdown.contains(e.target)) closeFarmPanel();
+});
+
+function resetFarmDropdown() {
+  farmTriggerTxt.textContent = 'Select a farm…';
+  farmHiddenName.value  = '';
+  farmHiddenAddr.value  = '';
+  farmTrigger.classList.remove('has-value', 'invalid', 'open');
+  farmAddrDisplay.classList.add('hidden');
+  farmAddrDisplay.textContent = '';
+  farmOtherWrap.classList.add('hidden');
+  farmOtherName.value    = '';
+  farmOtherAddress.value = '';
+  closeFarmPanel();
+}
+
 /* Reset */
 $('reg-reset').addEventListener('click', () => {
   regForm.reset();
@@ -663,13 +864,14 @@ $('reg-reset').addEventListener('click', () => {
   $('reg-feedback').classList.add('hidden');
   regForm.querySelectorAll('input').forEach(el => el.classList.remove('invalid'));
   resetBreedDropdown();
+  resetFarmDropdown();
 });
 
 /* Submit */
 regForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const required = ['reg-pig-name', 'reg-dob', 'reg-farm-name', 'reg-farm-address'];
+  const required = ['reg-pig-name', 'reg-dob'];
   let valid = true;
 
   required.forEach(id => {
@@ -688,6 +890,24 @@ regForm.addEventListener('submit', async (e) => {
     valid = false;
   } else {
     breedTrigger.classList.remove('invalid');
+  }
+
+  // Farm dropdown validation
+  if (!farmHiddenName.value.trim()) {
+    farmTrigger.classList.add('invalid');
+    valid = false;
+  } else {
+    farmTrigger.classList.remove('invalid');
+  }
+  if (!farmHiddenAddr.value.trim()) {
+    if (farmOtherWrap.classList.contains('hidden')) {
+      farmTrigger.classList.add('invalid');
+    } else {
+      farmOtherAddress.classList.add('invalid');
+    }
+    valid = false;
+  } else {
+    farmOtherAddress.classList.remove('invalid');
   }
 
   if (!fileInput.files[0]) {
