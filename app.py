@@ -1,10 +1,12 @@
 import os
+import json
 import cloudinary
 import cloudinary.uploader
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+from sqlalchemy import text
 
 app = Flask(__name__)
 CORS(app, origins=["*"])  # Allow all origins for production
@@ -50,9 +52,16 @@ class Pig(db.Model):
     vaccinated = db.Column(db.Boolean, default=False)
     vaccine_date = db.Column(db.String(50), nullable=True)
     breed = db.Column(db.String(100), nullable=False)
-    image = db.Column(db.String(250), nullable=False)  # filename
+    image = db.Column(db.Text, nullable=False)  # JSON array of Cloudinary URLs
 
     def to_dict(self):
+        # Parse images — supports legacy single URL and new JSON array
+        try:
+            images = json.loads(self.image)
+            if not isinstance(images, list):
+                images = [str(images)]
+        except (json.JSONDecodeError, TypeError, ValueError):
+            images = [self.image] if self.image else []
         return {
             'id': self.id,
             'pig_name': self.pig_name,
@@ -63,12 +72,21 @@ class Pig(db.Model):
             'vaccinated': self.vaccinated,
             'vaccine_date': self.vaccine_date,
             'breed': self.breed,
-            'image': self.image
+            'image': images[0] if images else '',  # first image (backward compat)
+            'images': images,                        # all images
         }
 
 # Create database tables automatically
 with app.app_context():
     db.create_all()
+    # Widen image column to TEXT in PostgreSQL (idempotent migration)
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(text("ALTER TABLE pig ALTER COLUMN image TYPE TEXT USING image::TEXT"))
+            conn.commit()
+        print("[Migration] image column widened to TEXT ✓")
+    except Exception as e:
+        print(f"[Migration] Note: {e} (column may already be TEXT — OK)")
 
 
 @app.route("/")
@@ -103,13 +121,13 @@ def upload_pig():
         if not all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET]):
             return jsonify({'error': 'Image upload service is not configured on the server. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Render environment variables.'}), 503
 
-        # 1. Check if an image is part of the request
-        if 'image' not in request.files:
+        # 1. Check if images are part of the request (up to 5)
+        image_files = request.files.getlist('image')
+        valid_images = [f for f in image_files if f and f.filename]
+        if not valid_images:
             return jsonify({'error': 'No image file provided in request'}), 400
-
-        image_file = request.files['image']
-        if image_file.filename == '':
-            return jsonify({'error': 'Empty image filename'}), 400
+        if len(valid_images) > 5:
+            valid_images = valid_images[:5]  # hard cap at 5
 
         # 2. Retrieve form data
         pig_name = request.form.get('pig_name')
@@ -128,9 +146,12 @@ def upload_pig():
         # 4. Auto-generate a unique serial pig ID
         pig_id = generate_pig_id()
 
-        # 5. Save the image to Cloudinary
-        result = cloudinary.uploader.upload(image_file)
-        image_url = result["secure_url"]
+        # 5. Upload all images to Cloudinary
+        image_urls = []
+        for img_file in valid_images:
+            result = cloudinary.uploader.upload(img_file)
+            image_urls.append(result['secure_url'])
+        image_json = json.dumps(image_urls)
 
         # 6. Store metadata in database
         new_pig = Pig(
@@ -142,7 +163,7 @@ def upload_pig():
             vaccinated=vaccinated,
             vaccine_date=vaccine_date,
             breed=breed,
-            image=image_url
+            image=image_json
         )
         db.session.add(new_pig)
         db.session.commit()
@@ -194,12 +215,35 @@ def update_pig(pig_id):
         if 'breed' in request.form:
             pig.breed = request.form['breed']
 
-        # Update image if a new one is provided
-        if 'image' in request.files:
-            image_file = request.files['image']
-            if image_file.filename != '':
-                result = cloudinary.uploader.upload(image_file)
-                pig.image = result["secure_url"]
+        # Update images using image_order slot system
+        # Frontend sends image_order as JSON (URLs + __fN placeholders) and files as img_N
+        image_order_str = request.form.get('image_order')
+        if image_order_str is not None:
+            try:
+                image_order = json.loads(image_order_str)
+            except Exception:
+                image_order = []
+
+            # Upload slot files (img_0, img_1, ...)
+            uploaded_slots = {}
+            for i in range(5):
+                f = request.files.get(f'img_{i}')
+                if f and f.filename:
+                    result = cloudinary.uploader.upload(f)
+                    uploaded_slots[f'__f{i}'] = result['secure_url']
+
+            # Reconstruct final ordered URL array (cover = first)
+            final_urls = []
+            for item in image_order[:5]:
+                if isinstance(item, str) and item.startswith('__f'):
+                    url = uploaded_slots.get(item)
+                    if url:
+                        final_urls.append(url)
+                elif isinstance(item, str) and item:
+                    final_urls.append(item)   # existing Cloudinary URL
+
+            if final_urls:
+                pig.image = json.dumps(final_urls)
 
         db.session.commit()
         return jsonify({'message': 'Pig updated successfully', 'pig': pig.to_dict()}), 200

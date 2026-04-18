@@ -139,18 +139,19 @@
 
           <!-- Image Upload -->
           <div class="form-section">
-            <h3 class="form-section-title">Pig Photo</h3>
+            <h3 class="form-section-title">Pig Photos <span style="font-weight:400;font-size:12px;color:var(--text-muted)">(up to 5 images)</span></h3>
             <div class="image-upload-zone" id="upload-zone">
-              <input type="file" id="reg-image" name="image" accept="image/*" required class="file-input" />
+              <input type="file" id="reg-image" name="image" accept="image/*" multiple required class="file-input" />
               <div class="upload-placeholder" id="upload-placeholder">
                 <div class="upload-icon">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 </div>
-                <p class="upload-text">Drop image here or <span>browse</span></p>
-                <p class="upload-hint">JPG, PNG, WEBP — max 10MB</p>
+                <p class="upload-text">Drop images here or <span>browse</span></p>
+                <p class="upload-hint">JPG, PNG, WEBP · Max 5 images · 10MB each</p>
               </div>
-              <img id="upload-preview" class="upload-preview hidden" alt="Preview" />
+              <div class="multi-preview-grid hidden" id="multi-preview-grid"></div>
             </div>
+            <div class="upload-counter hidden" id="upload-counter"></div>
           </div>
 
           <!-- Basic Info -->

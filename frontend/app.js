@@ -146,6 +146,19 @@ async function loadPigs() {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     allPigs = await res.json();
+    // Normalize images array on every pig (safety: parse JSON string if backend sends raw)
+    allPigs.forEach(pig => {
+      if (!Array.isArray(pig.images)) {
+        try {
+          const parsed = pig.image ? JSON.parse(pig.image) : [];
+          pig.images = Array.isArray(parsed) ? parsed : [pig.image].filter(Boolean);
+        } catch (_) {
+          pig.images = pig.image ? [pig.image] : [];
+        }
+      }
+      // Ensure pig.image is always the first from the resolved array
+      if (!pig.image && pig.images.length) pig.image = pig.images[0];
+    });
     renderPigs(allPigs);
     updateStats(allPigs);
   } catch (err) {
@@ -292,6 +305,40 @@ function filteredPigs() {
   );
 }
 
+/* ── IMAGE GALLERY BUILDER ──────────────────────────────────── */
+
+function buildImageGallery(images, name) {
+  // Defensive: ensure we have a real non-empty array
+  if (!Array.isArray(images)) {
+    try { images = images ? JSON.parse(images) : []; } catch (_) { images = []; }
+  }
+  images = images.filter(Boolean);
+  if (!images.length) return `<div class="modal-img-placeholder">🐷</div>`;
+  if (images.length === 1) {
+    return `<img class="modal-img" src="${esc(images[0])}" alt="${esc(name)}" onerror="this.style.display='none'" />`;
+  }
+  const slides = images.map((src, i) =>
+    `<div class="gallery-slide${i === 0 ? ' active' : ''}" data-idx="${i}">
+       <img src="${esc(src)}" alt="${esc(name)} photo ${i + 1}" onerror="this.parentElement.style.background='var(--bg-page)'" />
+     </div>`
+  ).join('');
+  const dots = images.map((_, i) =>
+    `<button type="button" class="gallery-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></button>`
+  ).join('');
+  return `
+    <div class="modal-gallery" id="modal-gallery" data-total="${images.length}">
+      <div class="gallery-track">${slides}</div>
+      <button type="button" class="gallery-nav gallery-prev" id="gallery-prev">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+      </button>
+      <button type="button" class="gallery-nav gallery-next" id="gallery-next">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9,6 15,12 9,18"/></svg>
+      </button>
+      <div class="gallery-dots">${dots}</div>
+      <div class="gallery-counter"><span id="gallery-cur">1</span>&#160;/&#160;${images.length}</div>
+    </div>`;
+}
+
 /* ── PIG DETAIL / EDIT MODAL ────────────────────────────────── */
 
 function openPigModal(pig, editMode = false) {
@@ -301,9 +348,9 @@ function openPigModal(pig, editMode = false) {
     ? `<span class="badge badge-vaccinated">✓ Vaccinated</span>`
     : `<span class="badge badge-unvaccinated">✗ Unvaccinated</span>`;
 
-  const imgBlock = pig.image
-    ? `<img class="modal-img" src="${esc(pig.image)}" alt="${esc(pig.pig_name)}" />`
-    : `<div class="modal-img-placeholder">🐷</div>`;
+  // Build gallery block for modal
+  const images = (pig.images && pig.images.length) ? pig.images : (pig.image ? [pig.image] : []);
+  const imgBlock = buildImageGallery(images, pig.pig_name);
 
   body.innerHTML = `
     ${imgBlock}
@@ -383,8 +430,15 @@ function openPigModal(pig, editMode = false) {
             <input type="date" id="edit-vaccine-date" value="${pig.vaccine_date || ''}" />
           </div>
           <div class="modal-edit-field full">
-            <label>Replace Image (optional)</label>
-            <input type="file" id="edit-image" accept="image/*" style="padding:8px;font-size:12.5px" />
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <label style="margin:0">Photos <span style="font-size:11px;color:var(--text-muted);font-weight:400">— &#9733; sets cover · first = Cover</span></label>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="edit-photo-counter" id="edit-photo-counter"></span>
+                <button type="button" class="btn btn-ghost btn-sm" id="edit-add-photo-btn" style="padding:6px 12px;font-size:12px">+ Add</button>
+              </div>
+            </div>
+            <div class="multi-preview-grid" id="edit-photo-grid"></div>
+            <input type="file" id="edit-image" accept="image/*" multiple class="hidden" />
           </div>
         </div>
 
@@ -426,6 +480,96 @@ function openPigModal(pig, editMode = false) {
     await saveEdit(pig.pig_id);
   });
 
+  /* ── Edit photo grid ── */
+  const editPhotos = images.map(url => ({ type: 'url', src: url }));
+  const editPhotoGrid    = body.querySelector('#edit-photo-grid');
+  const editPhotoCounter = body.querySelector('#edit-photo-counter');
+  const editAddBtn       = body.querySelector('#edit-add-photo-btn');
+  const editFileInput    = body.querySelector('#edit-image');
+
+  function renderEditPhotos() {
+    editPhotoGrid.innerHTML = '';
+    editPhotos.forEach((photo, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'preview-thumb';
+      const isCover = (i === 0);
+      wrap.innerHTML = `
+        <img src="${photo.src}" alt="Photo ${i + 1}" />
+        <button type="button" class="preview-remove" data-idx="${i}" title="Remove">×</button>
+        ${isCover
+          ? '<span class="preview-badge">Cover</span>'
+          : `<button type="button" class="set-cover-btn" data-idx="${i}" title="Set as Cover">★</button>`
+        }
+      `;
+      editPhotoGrid.appendChild(wrap);
+    });
+    // Remove
+    editPhotoGrid.querySelectorAll('.preview-remove').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        editPhotos.splice(parseInt(btn.dataset.idx), 1);
+        renderEditPhotos();
+      });
+    });
+    // Set as Cover — move to index 0
+    editPhotoGrid.querySelectorAll('.set-cover-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        const [item] = editPhotos.splice(idx, 1);
+        editPhotos.unshift(item);
+        renderEditPhotos();
+      });
+    });
+    const total = editPhotos.length;
+    editPhotoCounter.textContent = `${total} / 5`;
+  }
+
+  renderEditPhotos();
+
+  editAddBtn.addEventListener('click', () => {
+    if (editPhotos.length >= 5) { showToast('Max 5 photos already selected.', 'error'); return; }
+    editFileInput.click();
+  });
+
+  editFileInput.addEventListener('change', () => {
+    const remaining = 5 - editPhotos.length;
+    if (remaining <= 0) { showToast('Max 5 photos already selected.', 'error'); editFileInput.value = ''; return; }
+    const newPick = Array.from(editFileInput.files);
+    if (newPick.length > remaining) showToast(`Only ${remaining} more photo${remaining > 1 ? 's' : ''} can be added.`, 'error');
+    newPick.slice(0, remaining).forEach(f => {
+      const isDupe = editPhotos.some(p => p.type === 'file' && p.file.name === f.name && p.file.size === f.size);
+      if (!isDupe) editPhotos.push({ type: 'file', src: URL.createObjectURL(f), file: f });
+    });
+    editFileInput.value = '';
+    renderEditPhotos();
+  });
+
+  // Expose editPhotos to saveEdit via a closure on the save button
+  body.querySelector('#modal-save-btn')._editPhotos = editPhotos;
+
+  /* Wire gallery navigation (only if multiple images) */
+  const gallery = body.querySelector('#modal-gallery');
+  if (gallery) {
+    let cur   = 0;
+    const total  = parseInt(gallery.dataset.total);
+    const slides = gallery.querySelectorAll('.gallery-slide');
+    const dots   = gallery.querySelectorAll('.gallery-dot');
+    const curEl  = gallery.querySelector('#gallery-cur');
+
+    function goTo(idx) {
+      slides[cur].classList.remove('active');
+      dots[cur].classList.remove('active');
+      cur = (idx + total) % total;
+      slides[cur].classList.add('active');
+      dots[cur].classList.add('active');
+      if (curEl) curEl.textContent = cur + 1;
+    }
+    gallery.querySelector('#gallery-prev').addEventListener('click', e => { e.stopPropagation(); goTo(cur - 1); });
+    gallery.querySelector('#gallery-next').addEventListener('click', e => { e.stopPropagation(); goTo(cur + 1); });
+    dots.forEach((d, i) => d.addEventListener('click', e => { e.stopPropagation(); goTo(i); }));
+  }
+
   /* Show modal */
   $('modal-overlay').classList.remove('hidden');
   $('pig-modal').classList.remove('hidden');
@@ -460,8 +604,21 @@ async function saveEdit(pigId) {
   fd.append('vaccinated',   $('edit-vaccinated').checked ? 'true' : 'false');
   fd.append('vaccine_date', $('edit-vaccine-date').value);
 
-  const imgFile = $('edit-image').files[0];
-  if (imgFile) fd.append('image', imgFile);
+  // Build image_order and slot files from editPhotos (stored on the button during modal open)
+  const editPhotos = saveBtn._editPhotos || [];
+  const imageOrder = [];
+  let slotIdx = 0;
+  editPhotos.forEach(photo => {
+    if (photo.type === 'url') {
+      imageOrder.push(photo.src);
+    } else {
+      const key = `__f${slotIdx}`;
+      imageOrder.push(key);
+      fd.append(`img_${slotIdx}`, photo.file);
+      slotIdx++;
+    }
+  });
+  fd.append('image_order', JSON.stringify(imageOrder));
 
   try {
     const res  = await fetch(`${BASE_URL}/update/${encodeURIComponent(pigId)}`, {
@@ -524,19 +681,81 @@ regVaccinated.addEventListener('change', () => {
   vaccDateWrap.style.display = regVaccinated.checked ? 'grid' : 'none';
 });
 
-/* Image preview */
-const uploadZone   = $('upload-zone');
-const fileInput    = $('reg-image');
-const preview      = $('upload-preview');
-const placeholder  = $('upload-placeholder');
+// ── MULTI-IMAGE PREVIEW ──────────────────────────────────────── */
 
-fileInput.addEventListener('change', () => {
-  const file = fileInput.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  preview.src = url;
-  preview.classList.remove('hidden');
+const MAX_IMAGES    = 5;
+const uploadZone    = $('upload-zone');
+const fileInput     = $('reg-image');
+const placeholder   = $('upload-placeholder');
+const previewGrid   = $('multi-preview-grid');
+const uploadCounter = $('upload-counter');
+
+// Persistent accumulator — survives multiple file-picker sessions
+let selectedFiles = [];
+
+function mergeFiles(newFiles) {
+  // Add new files that aren't already in the list (match by name + size)
+  Array.from(newFiles).forEach(f => {
+    const isDupe = selectedFiles.some(e => e.name === f.name && e.size === f.size);
+    if (!isDupe && selectedFiles.length < MAX_IMAGES) {
+      selectedFiles.push(f);
+    }
+  });
+  if (selectedFiles.length > MAX_IMAGES) selectedFiles = selectedFiles.slice(0, MAX_IMAGES);
+}
+
+function renderPreviews() {
+  previewGrid.innerHTML = '';
+  if (!selectedFiles.length) {
+    previewGrid.classList.add('hidden');
+    placeholder.classList.remove('hidden');
+    uploadCounter.classList.add('hidden');
+    return;
+  }
   placeholder.classList.add('hidden');
+  previewGrid.classList.remove('hidden');
+
+  selectedFiles.forEach((file, i) => {
+    const url  = URL.createObjectURL(file);
+    const wrap = document.createElement('div');
+    wrap.className = 'preview-thumb';
+    wrap.innerHTML = `
+      <img src="${url}" alt="Photo ${i + 1}" />
+      <button type="button" class="preview-remove" data-idx="${i}" title="Remove">×</button>
+      ${i === 0 ? '<span class="preview-badge">Cover</span>' : ''}
+    `;
+    previewGrid.appendChild(wrap);
+  });
+
+  const count = selectedFiles.length;
+  uploadCounter.textContent = `${count} / ${MAX_IMAGES} photo${count > 1 ? 's' : ''} selected`;
+  uploadCounter.classList.remove('hidden');
+
+  // Wire remove buttons — splice from selectedFiles and re-render
+  previewGrid.querySelectorAll('.preview-remove').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      selectedFiles.splice(parseInt(btn.dataset.idx), 1);
+      renderPreviews();
+    });
+  });
+}
+
+// On each file-picker change: ACCUMULATE (don't replace)
+fileInput.addEventListener('change', () => {
+  const newPick = Array.from(fileInput.files);
+  const remaining = MAX_IMAGES - selectedFiles.length;
+  if (remaining <= 0) {
+    showToast(`Max ${MAX_IMAGES} images already selected.`, 'error');
+    fileInput.value = '';
+    return;
+  }
+  if (newPick.length > remaining) {
+    showToast(`Only ${remaining} more photo${remaining > 1 ? 's' : ''} can be added (max ${MAX_IMAGES}).`, 'error');
+  }
+  mergeFiles(newPick);
+  fileInput.value = '';   // reset so same file can be picked again next time
+  renderPreviews();
 });
 
 uploadZone.addEventListener('dragover', e => {
@@ -549,15 +768,12 @@ uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag
 uploadZone.addEventListener('drop', e => {
   e.preventDefault();
   uploadZone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) {
-    fileInput.files = e.dataTransfer.files;
-    const url = URL.createObjectURL(file);
-    preview.src = url;
-    preview.classList.remove('hidden');
-    placeholder.classList.add('hidden');
-  }
+  const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  if (!dropped.length) return;
+  mergeFiles(dropped);
+  renderPreviews();
 });
+
 
 /* ── BREED SEARCHABLE DROPDOWN ──────────────────────────────── */
 
@@ -862,14 +1078,15 @@ function resetFarmDropdown() {
 /* Reset */
 $('reg-reset').addEventListener('click', () => {
   regForm.reset();
-  preview.classList.add('hidden');
-  placeholder.classList.remove('hidden');
+  selectedFiles = [];
+  renderPreviews();
   vaccDateWrap.style.display = 'none';
   $('reg-feedback').classList.add('hidden');
   regForm.querySelectorAll('input').forEach(el => el.classList.remove('invalid'));
   resetBreedDropdown();
   resetFarmDropdown();
 });
+
 
 /* Submit */
 regForm.addEventListener('submit', async (e) => {
@@ -914,7 +1131,7 @@ regForm.addEventListener('submit', async (e) => {
     farmOtherAddress.classList.remove('invalid');
   }
 
-  if (!fileInput.files[0]) {
+  if (!selectedFiles.length) {
     uploadZone.style.borderColor = 'var(--red)';
     valid = false;
   } else {
@@ -942,7 +1159,7 @@ regForm.addEventListener('submit', async (e) => {
   fd.append('farm_address', $('reg-farm-address').value.trim());
   fd.append('vaccinated',   regVaccinated.checked ? 'true' : 'false');
   fd.append('vaccine_date', $('reg-vaccine-date').value);
-  fd.append('image',        fileInput.files[0]);
+  selectedFiles.forEach(f => fd.append('image', f));
 
   try {
     const res  = await fetch(`${BASE_URL}/upload`, {
@@ -962,10 +1179,13 @@ regForm.addEventListener('submit', async (e) => {
     showFeedback('reg-feedback', 'success', `✓ ${data.pig.pig_name} registered — ID: ${assignedId}`);
     showToast(`${data.pig.pig_name} added — ID: ${assignedId}`, 'success', 4500);
     regForm.reset();
-    preview.classList.add('hidden');
-    placeholder.classList.remove('hidden');
+    selectedFiles = [];
+    renderPreviews();
+    resetBreedDropdown();
+    resetFarmDropdown();
     vaccDateWrap.style.display = 'none';
     await loadPigs();
+
 
   } catch (err) {
     showFeedback('reg-feedback', 'error', '✗ ' + err.message);
