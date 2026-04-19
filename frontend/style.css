@@ -1595,6 +1595,16 @@ input::placeholder {
   text-align: center;
 }
 
+.breed-use-typed {
+  color: var(--accent);
+  font-weight: 600;
+  border-top: 1px solid var(--border-light);
+}
+
+.breed-use-typed:hover {
+  background: var(--accent-light) !important;
+}
+
 .breed-other-input {
   margin-top: 8px;
   width: 100%;

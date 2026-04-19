@@ -1131,6 +1131,7 @@ const breedSearchEl = $('breed-search');
 const breedList = $('breed-list');
 const breedHidden = $('reg-breed');
 const breedOtherInput = $('breed-other-input');
+const breedOtherWrap = $('breed-other-wrap');
 
 function renderBreedList(filter = '') {
   const q = filter.toLowerCase().trim();
@@ -1144,10 +1145,28 @@ function renderBreedList(filter = '') {
     breedList.appendChild(li);
   });
   if (!breedList.children.length) {
-    const li = document.createElement('li');
-    li.className = 'breed-no-results';
-    li.textContent = 'No breeds found';
-    breedList.appendChild(li);
+    if (q) {
+      const typed = filter.trim();
+      const li = document.createElement('li');
+      li.className = 'breed-option breed-use-typed';
+      li.textContent = `+ Use "${typed}" as breed`;
+      li.addEventListener('click', () => {
+        breedHidden.value = typed;
+        breedTriggerTxt.textContent = 'Other';
+        breedTrigger.classList.add('has-value');
+        breedTrigger.classList.remove('invalid');
+        breedOtherWrap.classList.remove('hidden');
+        breedOtherWrap.style.display = 'flex';
+        breedOtherInput.value = typed;
+        closeBreedPanel();
+      });
+      breedList.appendChild(li);
+    } else {
+      const li = document.createElement('li');
+      li.className = 'breed-no-results';
+      li.textContent = 'No breeds found';
+      breedList.appendChild(li);
+    }
   }
 }
 
@@ -1157,12 +1176,14 @@ function selectBreed(breed) {
   breedTrigger.classList.remove('invalid');
   if (breed === 'Other') {
     breedHidden.value = '';
-    breedOtherInput.classList.remove('hidden');
+    breedOtherWrap.classList.remove('hidden');
+    breedOtherWrap.style.display = 'flex';
     breedOtherInput.value = '';
     breedOtherInput.focus();
   } else {
     breedHidden.value = breed;
-    breedOtherInput.classList.add('hidden');
+    breedOtherWrap.classList.add('hidden');
+    breedOtherWrap.style.display = '';
     breedOtherInput.value = '';
   }
   closeBreedPanel();
@@ -1200,7 +1221,8 @@ function resetBreedDropdown() {
   breedTriggerTxt.textContent = 'Select a breed…';
   breedHidden.value = '';
   breedTrigger.classList.remove('has-value', 'invalid', 'open');
-  breedOtherInput.classList.add('hidden');
+  breedOtherWrap.classList.add('hidden');
+  breedOtherWrap.style.display = '';
   breedOtherInput.value = '';
   closeBreedPanel();
 }
@@ -1335,10 +1357,33 @@ function renderFarmList(filter = '') {
     farmListEl.appendChild(li);
   });
   if (!farmListEl.children.length) {
-    const li = document.createElement('li');
-    li.className = 'breed-no-results';
-    li.textContent = 'No farms found';
-    farmListEl.appendChild(li);
+    if (q) {
+      const typed = filter.trim();
+      const li = document.createElement('li');
+      li.className = 'breed-option breed-use-typed';
+      li.textContent = `+ Use "${typed}" as farm name`;
+      li.addEventListener('click', () => {
+        farmTriggerTxt.textContent = 'Other';
+        farmTrigger.classList.add('has-value');
+        farmTrigger.classList.remove('invalid');
+        const farmAddrSection = $('farm-address-section');
+        if (farmAddrSection) farmAddrSection.classList.add('hidden');
+        farmAddrDisplay.textContent = '';
+        farmOtherWrap.classList.remove('hidden');
+        farmOtherName.value = typed;
+        farmHiddenName.value = typed;
+        farmHiddenAddr.value = '';
+        farmOtherAddress.value = '';
+        closeFarmPanel();
+        setTimeout(() => farmOtherAddress.focus(), 50);
+      });
+      farmListEl.appendChild(li);
+    } else {
+      const li = document.createElement('li');
+      li.className = 'breed-no-results';
+      li.textContent = 'No farms found';
+      farmListEl.appendChild(li);
+    }
   }
 }
 

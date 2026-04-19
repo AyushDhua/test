@@ -276,8 +276,11 @@
                 <!-- Hidden input carries the actual value to FormData -->
                 <input type="hidden" id="reg-breed" name="breed" />
                 <!-- Shown only when 'Other' is selected -->
-                <input type="text" id="breed-other-input" class="breed-other-input hidden"
-                  placeholder="Enter breed name…" autocomplete="off" />
+                <div id="breed-other-wrap" class="hidden" style="flex-direction:column;gap:6px;margin-top:8px;">
+                  <label class="farm-address-label">Custom Breed Name <span class="required">*</span></label>
+                  <input type="text" id="breed-other-input" class="breed-other-input"
+                    placeholder="Custom breed name…" autocomplete="off" />
+                </div>
               </div>
             </div>
           </div>
@@ -315,11 +318,12 @@
                 </div>
                 <!-- Other: custom name + address inputs -->
                 <div class="farm-other-wrap hidden" id="farm-other-wrap">
-                  <input type="text" id="farm-other-name" class="breed-other-input" placeholder="Enter farm name…"
+                  <label class="farm-address-label">Custom Farm Name <span class="required">*</span></label>
+                  <input type="text" id="farm-other-name" class="breed-other-input" placeholder="Custom farm name…"
                     autocomplete="off" />
-                  <label class="farm-address-label" style="margin-top:12px">Farm Address <span
+                  <label class="farm-address-label" style="margin-top:12px">Custom Farm Address <span
                       class="required">*</span></label>
-                  <input type="text" id="farm-other-address" class="breed-other-input" placeholder="Enter farm address…"
+                  <input type="text" id="farm-other-address" class="breed-other-input" placeholder="Custom farm address…"
                     autocomplete="off" />
                 </div>
                 <!-- Hidden inputs carry values to FormData -->
