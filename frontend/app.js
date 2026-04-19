@@ -339,6 +339,48 @@ const filterOverlay = $('filter-overlay');
 const filterModal = $('filter-modal');
 const filterBtn = $('registry-filter-btn');
 
+/* ── SORTING STATE & DROPDOWN ────────────────────────────── */
+let currentSort = 'registration_desc';
+
+const sortBtn = $('registry-sort-btn');
+const sortDropdown = $('sort-dropdown');
+const sortBtnWrap = $('sort-btn-wrap');
+
+function closeSortDropdown() {
+  sortDropdown.classList.add('hidden');
+}
+
+if (sortBtn) sortBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  sortDropdown.classList.toggle('hidden');
+});
+
+document.addEventListener('click', (e) => {
+  if (sortBtnWrap && !sortBtnWrap.contains(e.target)) {
+    closeSortDropdown();
+  }
+});
+
+const sortItems = document.querySelectorAll('#sort-dropdown .sort-dropdown-item');
+sortItems.forEach(item => {
+  item.addEventListener('click', () => {
+    sortItems.forEach(s => s.classList.remove('active'));
+    item.classList.add('active');
+    currentSort = item.dataset.val;
+
+    if (currentSort === 'registration_desc') {
+      sortBtn.classList.remove('active');
+      if ($('sort-active-indicator')) $('sort-active-indicator').classList.add('hidden');
+    } else {
+      sortBtn.classList.add('active');
+      if ($('sort-active-indicator')) $('sort-active-indicator').classList.remove('hidden');
+    }
+
+    renderPigs(filteredPigs());
+    closeSortDropdown();
+  });
+});
+
 function openFilterModal() {
   filterOverlay.classList.remove('hidden');
   filterModal.classList.remove('hidden');
@@ -552,20 +594,43 @@ function filteredPigs() {
     list = list.filter(p => p.dob <= currentFilters.dob_end);
   }
   
-  // 2. Apply Quick Filter (if it exists)
-  const filterInput = $('registry-filter');
-  const q = filterInput ? filterInput.value.trim().toLowerCase() : '';
-  if (q) {
-    list = list.filter(p =>
-      (p.pig_name && p.pig_name.toLowerCase().includes(q)) ||
-      (p.pig_id && p.pig_id.toLowerCase().includes(q)) ||
-      (p.breed && p.breed.toLowerCase().includes(q)) ||
-      (p.farm_name && p.farm_name.toLowerCase().includes(q)) ||
-      (p.farm_address && p.farm_address.toLowerCase().includes(q))
-    );
+  // 2. Apply Sorting
+  list.sort((a, b) => {
+    switch (currentSort) {
+      case 'registration_desc':
+      case 'registration_asc':
+        const dateA = parseRegDate(a.registration_date);
+        const dateB = parseRegDate(b.registration_date);
+        return currentSort === 'registration_desc' ? dateB - dateA : dateA - dateB;
+      
+      case 'age_desc': // Eldest = Earliest DOB
+        return new Date(a.dob) - new Date(b.dob);
+      case 'age_asc': // Youngest = Latest DOB
+        return new Date(b.dob) - new Date(a.dob);
+      
+      case 'name_asc':
+        return (a.pig_name || '').localeCompare(b.pig_name || '');
+      case 'name_desc':
+        return (b.pig_name || '').localeCompare(a.pig_name || '');
+      
+      default: return 0;
+    }
+  });
+
+  // Helper to parse "dd/mm/yyyy hh:mm:ss"
+  function parseRegDate(str) {
+    if (!str || str === 'Legacy Record') return new Date(0);
+    try {
+      const parts = str.split(' ');
+      if (parts.length < 2) return new Date(0);
+      const [d, t] = parts;
+      const [day, month, year] = d.split('/');
+      const [h, m, s] = t.split(':');
+      return new Date(year, month - 1, day, h, m, s);
+    } catch { return new Date(0); }
   }
-  
-  // Also push stats update
+
+  // 3. Stats update
   updateStats(list);
   
   return list;
