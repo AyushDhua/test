@@ -562,6 +562,189 @@ body {
   animation: spin .65s cubic-bezier(.4, 0, .2, 1) 1 forwards;
 }
 
+/* ── FILTER BUTTON ───────────────────────────────────────────── */
+.filter-btn {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition),
+              color var(--transition), box-shadow var(--transition);
+  flex-shrink: 0;
+}
+
+.filter-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-btn.active {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg);
+}
+
+.filter-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: var(--coral);
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  /* Shown when filters are active but button isn't active state yet */
+}
+
+/* ── FILTER MODAL COMPONENTS ─────────────────────────────────── */
+.filter-modal-body {
+  padding: 0;
+  background: var(--bg);
+}
+
+.filter-modal-header {
+  padding: 24px 24px 16px;
+  border-bottom: none;
+}
+
+.filter-scroll-area {
+  padding: 0 24px 24px;
+}
+
+.filter-modal-section {
+  margin-bottom: 24px;
+}
+
+.filter-section-title {
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 800;
+  color: #a0a0a0;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.filter-modal-divider {
+  height: 1px;
+  background: #ebebeb;
+  margin-bottom: 20px;
+}
+
+/* Segmented Buttons for Vaccination */
+.filter-segmented-group {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+}
+
+.filter-segment {
+  padding: 12px 20px;
+  text-align: center;
+  font-weight: 500;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: none;
+  border-right: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.filter-segment:last-child {
+  border-right: none;
+}
+
+.filter-segment:hover {
+  background: var(--bg-hover);
+}
+
+.filter-segment.active {
+  background: var(--text-primary);
+  color: var(--bg);
+}
+
+/* Date Pickers & Dropdowns overrides */
+.filter-dropdown-wrap .breed-dropdown,
+.filter-dropdown-wrap .form-input {
+  height: 48px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg);
+  box-shadow: none;
+}
+
+.filter-dropdown-wrap .breed-trigger {
+  height: 100%;
+  border: none;
+}
+
+.filter-date-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.date-separator {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.filter-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg);
+  border-bottom-left-radius: var(--r-xl);
+  border-bottom-right-radius: var(--r-xl);
+}
+
+.filter-btn-clear {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--r-full);
+  padding: 12px 24px;
+  font-weight: 600;
+  transition: background var(--transition);
+}
+
+.filter-btn-clear:hover {
+  background: var(--border);
+  box-shadow: none;
+}
+
+.filter-btn-apply {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--r-full);
+  padding: 12px 28px;
+  font-weight: 600;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.filter-btn-apply:hover {
+  background: var(--accent-dark);
+  box-shadow: none;
+  border: none;
+}
+
 
 /* ── PIG GRID ────────────────────────────────────────────────── */
 .pig-grid {

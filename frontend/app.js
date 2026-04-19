@@ -18,7 +18,7 @@ function $qs(sel, ctx = document) { return ctx.querySelector(sel); }
 
 function showToast(msg, type = 'info', duration = 3200) {
   const tc = $('toast-container');
-  const t  = document.createElement('div');
+  const t = document.createElement('div');
   t.className = `toast ${type}`;
   t.innerHTML = `<span class="toast-dot"></span><span>${msg}</span>`;
   tc.appendChild(t);
@@ -36,12 +36,48 @@ function fmtDate(str) {
   } catch { return str; }
 }
 
+function calculateAge(str) {
+  if (!str) return '';
+  const dob = new Date(str);
+  if (isNaN(dob.getTime())) return '';
+  const now = new Date();
+  
+  let years = now.getFullYear() - dob.getFullYear();
+  let months = now.getMonth() - dob.getMonth();
+  
+  if (now.getDate() < dob.getDate()) {
+    months--;
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  
+  if (years < 0) return '';
+  
+  let parts = [];
+  if (years > 0) parts.push(`${years} year${years !== 1 ? 's' : ''}`);
+  if (months > 0) parts.push(`${months} month${months !== 1 ? 's' : ''}`);
+  
+  if (parts.length === 0) {
+    let diff = now - dob;
+    let days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days >= 0) {
+      parts.push(`${days} day${days !== 1 ? 's' : ''}`);
+    } else {
+      return '';
+    }
+  }
+  
+  return ` (${parts.join(', ')})`;
+}
+
 /* ── NAVIGATION ─────────────────────────────────────────────── */
 
 const views = {
   registry: { view: $('view-registry'), nav: $('nav-registry'), title: 'Pig DataBase' },
-  register: { view: $('view-register'),  nav: $('nav-register'),  title: 'Register New Pig'  },
-  search:   { view: $('view-search'),    nav: $('nav-search'),    title: 'Search Pigs'   },
+  register: { view: $('view-register'), nav: $('nav-register'), title: 'Register New Pig' },
+  search: { view: $('view-search'), nav: $('nav-search'), title: 'Search Pigs' },
 };
 
 function switchView(name) {
@@ -78,7 +114,7 @@ switchView(_savedView && views[_savedView] ? _savedView : 'registry');
 const sidebar = $('sidebar');
 
 function closeSidebar() { sidebar.classList.remove('open'); }
-function openSidebar()  { sidebar.classList.add('open'); }
+function openSidebar() { sidebar.classList.add('open'); }
 
 $('sidebar-toggle').addEventListener('click', () => {
   sidebar.classList.toggle('open');
@@ -99,13 +135,13 @@ async function checkServer() {
       headers: { 'x-api-key': API_KEY },
     });
     if (r.ok) {
-      $('status-dot').className  = 'status-dot online';
+      $('status-dot').className = 'status-dot online';
       $('status-text').textContent = 'Server Online';
     } else {
       throw new Error();
     }
   } catch {
-    $('status-dot').className  = 'status-dot offline';
+    $('status-dot').className = 'status-dot offline';
     $('status-text').textContent = 'Server Offline';
   }
 }
@@ -120,7 +156,7 @@ let viewMode = 'grid'; // 'grid' | 'list'
 
 async function loadPigs() {
   const emptyEl = $('registry-empty');
-  const grid    = $('pig-grid');
+  const grid = $('pig-grid');
 
   // Guard: only needed on very first call before DOM is ready
   if (!grid) return;
@@ -170,10 +206,10 @@ async function loadPigs() {
 }
 
 function updateStats(pigs) {
-  const vaccinated   = pigs.filter(p => p.vaccinated).length;
+  const vaccinated = pigs.filter(p => p.vaccinated).length;
   const unvaccinated = pigs.length - vaccinated;
-  $('stat-total').textContent        = pigs.length;
-  $('stat-vaccinated').textContent   = vaccinated;
+  $('stat-total').textContent = pigs.length;
+  $('stat-vaccinated').textContent = vaccinated;
   $('stat-unvaccinated').textContent = unvaccinated;
 }
 
@@ -288,21 +324,251 @@ $('registry-reload-btn').addEventListener('click', async () => {
   }
 });
 
-/* Quick filter */
-$('registry-filter').addEventListener('input', () => {
-  renderPigs(filteredPigs());
+/* Quick filter removed */
+/* ── ADVANCED REGISTRY FILTERING ────────────────────────────── */
+
+let currentFilters = {
+  vaccinated: 'all',
+  breed: '',
+  farm: '',
+  dob_start: '',
+  dob_end: ''
+};
+
+const filterOverlay = $('filter-overlay');
+const filterModal = $('filter-modal');
+const filterBtn = $('registry-filter-btn');
+
+function openFilterModal() {
+  filterOverlay.classList.remove('hidden');
+  filterModal.classList.remove('hidden');
+  filterModal.style.animation = 'slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+}
+
+function closeFilterModal() {
+  filterModal.style.animation = 'slideDown 0.25s ease-in forwards';
+  setTimeout(() => {
+    filterModal.classList.add('hidden');
+    filterOverlay.classList.add('hidden');
+  }, 250);
+}
+
+if (filterBtn) filterBtn.addEventListener('click', openFilterModal);
+if ($('filter-close')) $('filter-close').addEventListener('click', closeFilterModal);
+if (filterOverlay) filterOverlay.addEventListener('click', closeFilterModal);
+
+// Segmented buttons
+const filterSegments = document.querySelectorAll('#filter-vaccinated-group .filter-segment');
+filterSegments.forEach(segment => {
+  segment.addEventListener('click', (e) => {
+    filterSegments.forEach(s => s.classList.remove('active'));
+    e.target.classList.add('active');
+  });
 });
 
+// Dropdowns (similar to breed/farm)
+const fBreedDropdown = $('filter-breed-dropdown');
+const fBreedTrigger = $('filter-breed-trigger');
+const fBreedTx = $('filter-breed-trigger-text');
+const fBreedPanel = $('filter-breed-panel');
+const fBreedSearch = $('filter-breed-search');
+const fBreedList = $('filter-breed-list');
+
+const fFarmDropdown = $('filter-farm-dropdown');
+const fFarmTrigger = $('filter-farm-trigger');
+const fFarmTx = $('filter-farm-trigger-text');
+const fFarmPanel = $('filter-farm-panel');
+const fFarmSearch = $('filter-farm-search');
+const fFarmList = $('filter-farm-list');
+
+function renderFilterBreedList(filter = '') {
+  const q = filter.toLowerCase().trim();
+  fBreedList.innerHTML = '<li class="breed-option active" data-val="">All Breeds</li>';
+  if (typeof BREEDS !== 'undefined') {
+    BREEDS.forEach(breed => {
+      if (breed === 'Other') return;
+      if (q && !breed.toLowerCase().includes(q)) return;
+      const li = document.createElement('li');
+      li.className = 'breed-option';
+      li.textContent = breed;
+      li.dataset.val = breed;
+      fBreedList.appendChild(li);
+    });
+  }
+}
+
+function renderFilterFarmList(filter = '') {
+  const q = filter.toLowerCase().trim();
+  fFarmList.innerHTML = '<li class="breed-option active" data-val="">All Farms</li>';
+  if (typeof FARMS !== 'undefined') {
+    FARMS.forEach(farm => {
+      if (farm.name === 'Other') return;
+      if (q && !farm.name.toLowerCase().includes(q) && !farm.address.toLowerCase().includes(q)) return;
+      const li = document.createElement('li');
+      li.className = 'breed-option';
+      li.innerHTML = `<div>${esc(farm.name)}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${esc(farm.address)}</div>`;
+      li.dataset.val = farm.name;
+      fFarmList.appendChild(li);
+    });
+  }
+}
+
+if (fBreedList) {
+  fBreedList.addEventListener('click', (e) => {
+    const li = e.target.closest('li');
+    if (!li) return;
+    const val = li.dataset.val;
+    $('filter-breed-val').value = val;
+    fBreedTx.textContent = val ? val : 'All Breeds';
+    fBreedDropdown.classList.remove('open');
+    fBreedPanel.classList.add('hidden');
+  });
+}
+
+if (fFarmList) {
+  fFarmList.addEventListener('click', (e) => {
+    const li = e.target.closest('li');
+    if (!li) return;
+    const val = li.dataset.val;
+    $('filter-farm-val').value = val;
+    fFarmTx.textContent = val ? val : 'All Farms';
+    fFarmDropdown.classList.remove('open');
+    fFarmPanel.classList.add('hidden');
+  });
+}
+
+if (fBreedTrigger) {
+  fBreedTrigger.addEventListener('click', () => {
+    const isOpen = fBreedDropdown.classList.contains('open');
+    if (!isOpen) renderFilterBreedList();
+    fBreedDropdown.classList.toggle('open');
+    fBreedPanel.classList.toggle('hidden');
+    if (!isOpen) fBreedSearch.focus();
+  });
+}
+
+if (fFarmTrigger) {
+  fFarmTrigger.addEventListener('click', () => {
+    const isOpen = fFarmDropdown.classList.contains('open');
+    if (!isOpen) renderFilterFarmList();
+    fFarmDropdown.classList.toggle('open');
+    fFarmPanel.classList.toggle('hidden');
+    if (!isOpen) fFarmSearch.focus();
+  });
+}
+
+if (fBreedSearch) fBreedSearch.addEventListener('input', e => renderFilterBreedList(e.target.value));
+if (fFarmSearch) fFarmSearch.addEventListener('input', e => renderFilterFarmList(e.target.value));
+
+document.addEventListener('click', (e) => {
+  if (fBreedDropdown && fBreedPanel && !e.target.closest('#filter-breed-dropdown')) {
+    fBreedDropdown.classList.remove('open');
+    fBreedPanel.classList.add('hidden');
+  }
+  if (fFarmDropdown && fFarmPanel && !e.target.closest('#filter-farm-dropdown')) {
+    fFarmDropdown.classList.remove('open');
+    fFarmPanel.classList.add('hidden');
+  }
+});
+
+if ($('filter-clear')) {
+  $('filter-clear').addEventListener('click', () => {
+    // Clear segments
+    filterSegments.forEach(s => s.classList.remove('active'));
+    const allSegment = document.querySelector('#filter-vaccinated-group .filter-segment[data-val="all"]');
+    if (allSegment) allSegment.classList.add('active');
+    
+    // Clear dropdowns
+    if ($('filter-breed-val')) $('filter-breed-val').value = '';
+    if (fBreedTx) fBreedTx.textContent = 'All Breeds';
+    if ($('filter-farm-val')) $('filter-farm-val').value = '';
+    if (fFarmTx) fFarmTx.textContent = 'All Farms';
+    
+    // Clear dates
+    if ($('filter-dob-start')) $('filter-dob-start').value = '';
+    if ($('filter-dob-end')) $('filter-dob-end').value = '';
+    
+    applyFilters();
+  });
+}
+
+if ($('filter-apply')) {
+  $('filter-apply').addEventListener('click', () => {
+    applyFilters();
+    closeFilterModal();
+  });
+}
+
+function applyFilters() {
+  const activeSegment = document.querySelector('#filter-vaccinated-group .filter-segment.active');
+  currentFilters.vaccinated = activeSegment ? activeSegment.dataset.val : 'all';
+  currentFilters.breed = $('filter-breed-val') ? $('filter-breed-val').value : '';
+  currentFilters.farm = $('filter-farm-val') ? $('filter-farm-val').value : '';
+  currentFilters.dob_start = $('filter-dob-start') ? $('filter-dob-start').value : '';
+  currentFilters.dob_end = $('filter-dob-end') ? $('filter-dob-end').value : '';
+  
+  const isActive = currentFilters.vaccinated !== 'all' || 
+                   currentFilters.breed || 
+                   currentFilters.farm || 
+                   currentFilters.dob_start || 
+                   currentFilters.dob_end;
+  
+  if (filterBtn) {
+    if (isActive) {
+      filterBtn.classList.add('active');
+      $('filter-active-indicator').classList.remove('hidden');
+    } else {
+      filterBtn.classList.remove('active');
+      $('filter-active-indicator').classList.add('hidden');
+    }
+  }
+  
+  renderPigs(filteredPigs());
+}
+
 function filteredPigs() {
-  const q = $('registry-filter').value.trim().toLowerCase();
-  if (!q) return allPigs;
-  return allPigs.filter(p =>
-    p.pig_name.toLowerCase().includes(q) ||
-    p.pig_id.toLowerCase().includes(q) ||
-    p.breed.toLowerCase().includes(q) ||
-    p.farm_name.toLowerCase().includes(q) ||
-    p.farm_address.toLowerCase().includes(q)
-  );
+  let list = allPigs;
+  
+  // 1. Apply Advanced Filters
+  if (currentFilters.vaccinated === 'true') {
+    list = list.filter(p => p.vaccinated === true);
+  } else if (currentFilters.vaccinated === 'false') {
+    list = list.filter(p => p.vaccinated === false);
+  }
+  
+  if (currentFilters.breed) {
+    list = list.filter(p => p.breed === currentFilters.breed);
+  }
+  
+  if (currentFilters.farm) {
+    list = list.filter(p => p.farm_name === currentFilters.farm);
+  }
+  
+  if (currentFilters.dob_start) {
+    list = list.filter(p => p.dob >= currentFilters.dob_start);
+  }
+  
+  if (currentFilters.dob_end) {
+    list = list.filter(p => p.dob <= currentFilters.dob_end);
+  }
+  
+  // 2. Apply Quick Filter (if it exists)
+  const filterInput = $('registry-filter');
+  const q = filterInput ? filterInput.value.trim().toLowerCase() : '';
+  if (q) {
+    list = list.filter(p =>
+      (p.pig_name && p.pig_name.toLowerCase().includes(q)) ||
+      (p.pig_id && p.pig_id.toLowerCase().includes(q)) ||
+      (p.breed && p.breed.toLowerCase().includes(q)) ||
+      (p.farm_name && p.farm_name.toLowerCase().includes(q)) ||
+      (p.farm_address && p.farm_address.toLowerCase().includes(q))
+    );
+  }
+  
+  // Also push stats update
+  updateStats(list);
+  
+  return list;
 }
 
 /* ── IMAGE GALLERY BUILDER ──────────────────────────────────── */
@@ -370,7 +636,7 @@ function openPigModal(pig, editMode = false) {
         </div>
         <div class="detail-item">
           <div class="detail-label">Date of Birth</div>
-          <div class="detail-value">${fmtDate(pig.dob)}</div>
+          <div class="detail-value">${fmtDate(pig.dob)}${calculateAge(pig.dob)}</div>
         </div>
         <div class="detail-item">
           <div class="detail-label">Farm</div>
@@ -482,10 +748,10 @@ function openPigModal(pig, editMode = false) {
 
   /* ── Edit photo grid ── */
   const editPhotos = images.map(url => ({ type: 'url', src: url }));
-  const editPhotoGrid    = body.querySelector('#edit-photo-grid');
+  const editPhotoGrid = body.querySelector('#edit-photo-grid');
   const editPhotoCounter = body.querySelector('#edit-photo-counter');
-  const editAddBtn       = body.querySelector('#edit-add-photo-btn');
-  const editFileInput    = body.querySelector('#edit-image');
+  const editAddBtn = body.querySelector('#edit-add-photo-btn');
+  const editFileInput = body.querySelector('#edit-image');
 
   function renderEditPhotos() {
     editPhotoGrid.innerHTML = '';
@@ -551,11 +817,11 @@ function openPigModal(pig, editMode = false) {
   /* Wire gallery navigation (only if multiple images) */
   const gallery = body.querySelector('#modal-gallery');
   if (gallery) {
-    let cur   = 0;
-    const total  = parseInt(gallery.dataset.total);
+    let cur = 0;
+    const total = parseInt(gallery.dataset.total);
     const slides = gallery.querySelectorAll('.gallery-slide');
-    const dots   = gallery.querySelectorAll('.gallery-dot');
-    const curEl  = gallery.querySelector('#gallery-cur');
+    const dots = gallery.querySelectorAll('.gallery-dot');
+    const curEl = gallery.querySelector('#gallery-cur');
 
     function goTo(idx) {
       slides[cur].classList.remove('active');
@@ -586,22 +852,22 @@ $('modal-close').addEventListener('click', closeModal);
 $('modal-overlay').addEventListener('click', closeModal);
 
 async function saveEdit(pigId) {
-  const saveBtn     = $('modal-save-btn');
-  const saveText    = $('modal-save-text');
+  const saveBtn = $('modal-save-btn');
+  const saveText = $('modal-save-text');
   const saveSpinner = $('modal-save-spinner');
-  const feedback    = $('modal-edit-feedback');
+  const feedback = $('modal-edit-feedback');
 
   saveBtn.disabled = true;
   saveText.textContent = 'Saving…';
   saveSpinner.classList.remove('hidden');
 
   const fd = new FormData();
-  fd.append('pig_name',     $('edit-pig-name').value.trim());
-  fd.append('dob',          $('edit-dob').value);
-  fd.append('breed',        $('edit-breed').value.trim());
-  fd.append('farm_name',    $('edit-farm-name').value.trim());
+  fd.append('pig_name', $('edit-pig-name').value.trim());
+  fd.append('dob', $('edit-dob').value);
+  fd.append('breed', $('edit-breed').value.trim());
+  fd.append('farm_name', $('edit-farm-name').value.trim());
   fd.append('farm_address', $('edit-farm-address').value.trim());
-  fd.append('vaccinated',   $('edit-vaccinated').checked ? 'true' : 'false');
+  fd.append('vaccinated', $('edit-vaccinated').checked ? 'true' : 'false');
   fd.append('vaccine_date', $('edit-vaccine-date').value);
 
   // Build image_order and slot files from editPhotos (stored on the button during modal open)
@@ -621,10 +887,10 @@ async function saveEdit(pigId) {
   fd.append('image_order', JSON.stringify(imageOrder));
 
   try {
-    const res  = await fetch(`${BASE_URL}/update/${encodeURIComponent(pigId)}`, {
+    const res = await fetch(`${BASE_URL}/update/${encodeURIComponent(pigId)}`, {
       method: 'POST',
       headers: { 'x-api-key': API_KEY },
-      body:   fd,
+      body: fd,
       // NOTE: Do NOT set Content-Type manually for FormData —
       // the browser sets it automatically with the correct multipart boundary.
     });
@@ -655,7 +921,7 @@ async function deletePig(pigId, pigName) {
   if (!confirmed) return;
 
   try {
-    const res  = await fetch(`${BASE_URL}/delete/${encodeURIComponent(pigId)}`, {
+    const res = await fetch(`${BASE_URL}/delete/${encodeURIComponent(pigId)}`, {
       method: 'DELETE',
       headers: { 'x-api-key': API_KEY },
     });
@@ -673,9 +939,9 @@ async function deletePig(pigId, pigName) {
 
 /* ── REGISTER PIG FORM ──────────────────────────────────────── */
 
-const regForm       = $('register-form');
+const regForm = $('register-form');
 const regVaccinated = $('reg-vaccinated');
-const vaccDateWrap  = $('vaccine-date-wrap');
+const vaccDateWrap = $('vaccine-date-wrap');
 
 regVaccinated.addEventListener('change', () => {
   vaccDateWrap.style.display = regVaccinated.checked ? 'grid' : 'none';
@@ -683,11 +949,11 @@ regVaccinated.addEventListener('change', () => {
 
 // ── MULTI-IMAGE PREVIEW ──────────────────────────────────────── */
 
-const MAX_IMAGES    = 5;
-const uploadZone    = $('upload-zone');
-const fileInput     = $('reg-image');
-const placeholder   = $('upload-placeholder');
-const previewGrid   = $('multi-preview-grid');
+const MAX_IMAGES = 5;
+const uploadZone = $('upload-zone');
+const fileInput = $('reg-image');
+const placeholder = $('upload-placeholder');
+const previewGrid = $('multi-preview-grid');
 const uploadCounter = $('upload-counter');
 
 // Persistent accumulator — survives multiple file-picker sessions
@@ -716,7 +982,7 @@ function renderPreviews() {
   previewGrid.classList.remove('hidden');
 
   selectedFiles.forEach((file, i) => {
-    const url  = URL.createObjectURL(file);
+    const url = URL.createObjectURL(file);
     const wrap = document.createElement('div');
     wrap.className = 'preview-thumb';
     wrap.innerHTML = `
@@ -788,13 +1054,13 @@ const BREEDS = [
   'Other',
 ];
 
-const breedDropdown   = $('breed-dropdown');
-const breedTrigger    = $('breed-trigger');
+const breedDropdown = $('breed-dropdown');
+const breedTrigger = $('breed-trigger');
 const breedTriggerTxt = $('breed-trigger-text');
-const breedPanel      = $('breed-panel');
-const breedSearchEl   = $('breed-search');
-const breedList       = $('breed-list');
-const breedHidden     = $('reg-breed');
+const breedPanel = $('breed-panel');
+const breedSearchEl = $('breed-search');
+const breedList = $('breed-list');
+const breedHidden = $('reg-breed');
 const breedOtherInput = $('breed-other-input');
 
 function renderBreedList(filter = '') {
@@ -873,120 +1139,120 @@ function resetBreedDropdown() {
 /* ── FARM SEARCHABLE DROPDOWN ───────────────────────────────── */
 
 const FARMS = [
-  { name: 'A & A Piggery Farm',                                                    address: 'Id More, Sikidri, Ranchi, Jharkhand 835219, India' },
-  { name: 'AICRP on Pig – Assam Agricultural University Campus',                   address: 'Khanapara, Guwahati, Assam 781022, India' },
-  { name: 'AICRP on Pig – College of Veterinary Sciences, Agartala',               address: 'Agartala, Tripura 799006, India' },
-  { name: 'AICRP on Pig – College of Veterinary Sciences, Aizawl',                address: 'Aizawl, Mizoram 796015, India' },
-  { name: 'AICRP on Pig – College of Veterinary Sciences, Gangtok',               address: 'Gangtok, Sikkim 737102, India' },
-  { name: 'AICRP on Pig – College of Veterinary Sciences, Imphal',                address: 'Imphal, Manipur 795004, India' },
-  { name: 'AICRP on Pig – College of Veterinary Sciences, Itanagar',              address: 'Itanagar, Arunachal Pradesh 791111, India' },
-  { name: 'AICRP on Pig – ICAR-CCARI Campus',                                    address: 'Old Goa, Goa 403402, India' },
-  { name: 'AICRP on Pig – ICAR-CIARI Campus',                                    address: 'Port Blair, Andaman & Nicobar Islands 744101, India' },
-  { name: 'AICRP on Pig – ICAR-IVRI Campus',                                     address: 'Izatnagar, Bareilly, Uttar Pradesh 243122, India' },
-  { name: 'AICRP on Pig – ICAR-RCNEH Campus',                                    address: 'Umiam, Meghalaya 793103, India' },
-  { name: 'AICRP on Pig – Nagaland University, Medziphema Campus',               address: 'Dimapur, Nagaland 797106, India' },
-  { name: 'AICRP on Pig – West Bengal University of Animal & Fishery Sciences',   address: 'Mohanpur, Nadia, West Bengal 741252, India' },
-  { name: 'Ajit Pig Farm',                                                          address: 'Sankosai, Asura, West Singhbhum, Jharkhand 833202, India' },
-  { name: 'Anil Mahto Pig Farm',                                                    address: 'Madhaipur, Natundanga, Bardhaman, West Bengal 713381, India' },
-  { name: 'Ankush Pig Farms',                                                       address: 'Ghatkhed, Maharashtra 444602, India' },
-  { name: 'Aparna Agro',                                                            address: 'Near Ram Mandir, Laxmi Sagar, Bhubaneswar, Odisha, India' },
-  { name: 'Ashirwad Piggery Farm',                                                  address: 'Hill View Colony, Jamshedpur, Jharkhand, India' },
-  { name: 'Assam Agricultural University Pig Farm',                                 address: 'Khanapara, Guwahati, Assam 781022, India' },
-  { name: 'Atoz Farm',                                                              address: 'Sayestanagar, North 24 Parganas, West Bengal 743427, India' },
-  { name: 'Baba Pigry Farm',                                                        address: 'Punjab, India' },
-  { name: 'Barki Devi Pig Farm',                                                    address: 'NH19, Barakatha, Jharkhand, India' },
-  { name: 'Bethlehem Rabbit Farm & Agricultural (Pig Unit)',                        address: 'India' },
-  { name: 'Bihar Animal Sciences University Pig Farm',                              address: 'Patna, Bihar 800014, India' },
-  { name: 'Bishop Braddy Agro Farm',                                                address: 'Fatehpur, Uttar Pradesh 212652, India' },
-  { name: 'Bobby Piggery Farm',                                                     address: 'India' },
-  { name: 'Brothers Agriculture & Farming Company',                                 address: 'Bistupur, Jamshedpur, Jharkhand, India' },
-  { name: 'Budheswar Soren Pig Farm',                                               address: 'Mayurbhanj, Odisha 757040, India' },
-  { name: 'Ccube Pig Farm',                                                         address: 'Chokkasandra, Bengaluru, Karnataka 560099, India' },
-  { name: 'Chaudhary Pig Farm',                                                     address: 'Naraura, Bulandshahr, Uttar Pradesh, India' },
-  { name: 'Devsatya Farms Pvt Ltd',                                                 address: 'Farrukhabad, Uttar Pradesh 209601, India' },
-  { name: 'Diyan Livestock Pig Farm',                                               address: 'Village Kot, Dadri, Uttar Pradesh, India' },
-  { name: 'Dumbi Hembrom Pig Farm',                                                 address: 'West Singhbhum, Jharkhand, India' },
-  { name: 'Farmers Universe Pigg Farm',                                             address: 'Jharkhand, India' },
-  { name: 'Five Square Agro Pig Farm',                                              address: 'Raigarh, Chhattisgarh, India' },
-  { name: 'Gitanjali Farm (Pig Unit)',                                              address: 'India' },
-  { name: 'GK Farms (Pig Farming Unit)',                                            address: 'Coimbatore, Tamil Nadu, India' },
-  { name: 'Government Livestock Farm (Pig Unit)',                                   address: 'Hisar, Haryana 125004, India' },
-  { name: 'Government Pig Breeding Farm – Kanke',                                  address: 'Kanke, Ranchi, Jharkhand 834006, India' },
-  { name: 'Government Pig Breeding Farm – Khanapara',                              address: 'Khanapara, Guwahati, Assam 781022, India' },
-  { name: 'Government Pig Breeding Farm – Medziphema',                             address: 'Medziphema, Dimapur, Nagaland 797106, India' },
-  { name: 'Government Pig Farm – Agartala',                                        address: 'Agartala, Tripura 799001, India' },
-  { name: 'Government Pig Farm – Aizawl',                                          address: 'Aizawl, Mizoram 796001, India' },
-  { name: 'Government Pig Farm – Bhubaneswar',                                     address: 'Bhubaneswar, Odisha 751003, India' },
-  { name: 'Government Pig Farm – Byrnihat',                                        address: 'Byrnihat, Ri-Bhoi, Meghalaya 793101, India' },
-  { name: 'Government Pig Farm – Gangtok',                                         address: 'Gangtok, Sikkim 737101, India' },
-  { name: 'Government Pig Farm – Imphal',                                          address: 'Imphal, Manipur 795004, India' },
-  { name: 'Government Pig Farm – Itanagar',                                        address: 'Itanagar, Arunachal Pradesh 791111, India' },
-  { name: 'Government Pig Farm – Kalyani',                                         address: 'Kalyani, Nadia, West Bengal 741235, India' },
-  { name: 'Government Pig Farm – Patna',                                           address: 'Patna, Bihar 800014, India' },
-  { name: 'HOSH Farms Pig Unit',                                                    address: 'Vizianagaram, Andhra Pradesh 535006, India' },
-  { name: 'HPS Piggery Farm',                                                       address: 'Char Brahmanagar, Nadia, West Bengal 741301, India' },
-  { name: 'ICAR – CCARI Pig Unit',                                                 address: 'Ela, Old Goa, Goa 403402, India' },
-  { name: 'ICAR – CIARI Pig Farm',                                                 address: 'Port Blair, Andaman & Nicobar Islands 744101, India' },
-  { name: 'ICAR – ERS Pig Farm',                                                   address: 'Kalyani, Nadia, West Bengal 741235, India' },
-  { name: 'ICAR – IVRI Pig Farm',                                                  address: 'Izatnagar, Bareilly, Uttar Pradesh 243122, India' },
-  { name: 'ICAR – NRC on Pig',                                                     address: 'Rani, Guwahati, Kamrup, Assam 781131, India' },
-  { name: 'ICAR – RCNEH Pig Unit',                                                 address: 'Umiam, Barapani, Meghalaya 793103, India' },
-  { name: 'Irene Piggery',                                                          address: 'Lawngtlai, Mizoram, India' },
-  { name: 'Jaswant Pig Farm',                                                       address: 'Dhaulana, Ghaziabad, Uttar Pradesh, India' },
-  { name: 'JB Agro & Livestock',                                                    address: 'Nadia, West Bengal, India' },
-  { name: 'Joy Baba Lokenath Piggery Firm',                                         address: 'Bongaon, West Bengal 743245, India' },
-  { name: 'K.K Pig Breeding Farm & Training Centre',                                address: 'Ranchi, Jharkhand 835303, India' },
-  { name: 'Kaimur & Umang Piggery Group',                                           address: 'Bihar, India' },
-  { name: 'Kamboj Pig Farm',                                                        address: 'India' },
-  { name: 'Karnal Swine Breeding Farm',                                             address: 'Karnal, Haryana 132037, India' },
-  { name: 'Kerala Veterinary and Animal Sciences University Pig Farm',              address: 'Mannuthy, Thrissur, Kerala 680651, India' },
-  { name: 'Khushi Livestock Pig Farm',                                              address: 'India' },
-  { name: 'Maa Kali Pig Farm',                                                      address: 'North 24 Parganas, West Bengal, India' },
-  { name: 'Maa Piggery Bhollakash',                                                 address: 'Bhollakash, India' },
-  { name: 'Mina Pork Meat Pig Farm',                                                address: 'North 24 Parganas, West Bengal, India' },
-  { name: 'Mizoram University Pig Farm',                                            address: 'Aizawl, Mizoram 796004, India' },
-  { name: 'Monu Sree Pig Farm',                                                     address: 'Chakdaha, West Bengal 741248, India' },
-  { name: 'Murmu Enterprise Pig Farm',                                              address: 'Jharkhand, India' },
-  { name: 'Nagaland University Pig Farm',                                           address: 'Medziphema, Dimapur, Nagaland 797106, India' },
-  { name: 'Narsanda Pig Farm',                                                      address: 'Jharkhand, India' },
-  { name: 'Narsing Farm',                                                           address: 'Ranchi, Jharkhand, India' },
-  { name: 'New Jyoti Foundation Pig Farm',                                          address: 'Jharkhand, India' },
-  { name: 'Om Sai Piggery Farm',                                                    address: 'Jharkhand, India' },
-  { name: 'Padangka Livestock Farm',                                                address: 'Chukuniapara, Assam 781135, India' },
-  { name: 'Paras Farma Pig Unit',                                                   address: 'India' },
-  { name: 'Pig Farming Training & Research Institute of India Farm',                address: 'Helencha, Bongaon, West Bengal 743270, India' },
-  { name: 'Pradhan Pig Farming',                                                    address: 'Jamulanda, India' },
-  { name: 'Raghuvanshi Pig Farm',                                                   address: 'Noida, Uttar Pradesh 201304, India' },
-  { name: 'Raj Kumar Piggery Farm',                                                 address: 'Kamalpur, Punjab 147101, India' },
-  { name: 'Rana Pig Farm',                                                          address: 'Pindaura Jahangeerpur, India' },
-  { name: 'Sagar Livestock Pig Farm',                                               address: 'Yamunanagar, Haryana 135133, India' },
-  { name: 'Sai Agro Pig Farm',                                                      address: 'Daund, Maharashtra 412207, India' },
-  { name: 'SKUAST Pig Farm',                                                        address: 'Jammu, Jammu & Kashmir 180009, India' },
-  { name: 'Snow White Piggery',                                                     address: 'Jharkhand, India' },
-  { name: 'SS Piggery Farm',                                                        address: 'Majhola, Moradabad, Uttar Pradesh 244001, India' },
-  { name: 'Suvojit Pig Farm',                                                       address: 'Sayestanagar, North 24 Parganas, West Bengal, India' },
-  { name: 'Sure Farm Pig Unit',                                                     address: 'Dehradun, Uttarakhand 248002, India' },
-  { name: 'TANUVAS Pig Farm',                                                       address: 'Madhavaram, Chennai, Tamil Nadu 600051, India' },
-  { name: 'Tripura Veterinary College Pig Farm',                                    address: 'Agartala, Tripura 799006, India' },
-  { name: 'Universal Piggery',                                                      address: 'India' },
-  { name: 'Vikas Kumar Agro Livestock Farm',                                        address: 'Patna, Bihar, India' },
-  { name: 'Vikas Livestock Pig Farm',                                               address: 'Saharanpur, Uttar Pradesh 247001, India' },
-  { name: 'West Bengal University of Animal & Fishery Sciences Pig Farm',          address: 'Mohanpur, Nadia, West Bengal 741252, India' },
+  { name: 'A & A Piggery Farm', address: 'Id More, Sikidri, Ranchi, Jharkhand 835219, India' },
+  { name: 'AICRP on Pig – Assam Agricultural University Campus', address: 'Khanapara, Guwahati, Assam 781022, India' },
+  { name: 'AICRP on Pig – College of Veterinary Sciences, Agartala', address: 'Agartala, Tripura 799006, India' },
+  { name: 'AICRP on Pig – College of Veterinary Sciences, Aizawl', address: 'Aizawl, Mizoram 796015, India' },
+  { name: 'AICRP on Pig – College of Veterinary Sciences, Gangtok', address: 'Gangtok, Sikkim 737102, India' },
+  { name: 'AICRP on Pig – College of Veterinary Sciences, Imphal', address: 'Imphal, Manipur 795004, India' },
+  { name: 'AICRP on Pig – College of Veterinary Sciences, Itanagar', address: 'Itanagar, Arunachal Pradesh 791111, India' },
+  { name: 'AICRP on Pig – ICAR-CCARI Campus', address: 'Old Goa, Goa 403402, India' },
+  { name: 'AICRP on Pig – ICAR-CIARI Campus', address: 'Port Blair, Andaman & Nicobar Islands 744101, India' },
+  { name: 'AICRP on Pig – ICAR-IVRI Campus', address: 'Izatnagar, Bareilly, Uttar Pradesh 243122, India' },
+  { name: 'AICRP on Pig – ICAR-RCNEH Campus', address: 'Umiam, Meghalaya 793103, India' },
+  { name: 'AICRP on Pig – Nagaland University, Medziphema Campus', address: 'Dimapur, Nagaland 797106, India' },
+  { name: 'AICRP on Pig – West Bengal University of Animal & Fishery Sciences', address: 'Mohanpur, Nadia, West Bengal 741252, India' },
+  { name: 'Ajit Pig Farm', address: 'Sankosai, Asura, West Singhbhum, Jharkhand 833202, India' },
+  { name: 'Anil Mahto Pig Farm', address: 'Madhaipur, Natundanga, Bardhaman, West Bengal 713381, India' },
+  { name: 'Ankush Pig Farms', address: 'Ghatkhed, Maharashtra 444602, India' },
+  { name: 'Aparna Agro', address: 'Near Ram Mandir, Laxmi Sagar, Bhubaneswar, Odisha, India' },
+  { name: 'Ashirwad Piggery Farm', address: 'Hill View Colony, Jamshedpur, Jharkhand, India' },
+  { name: 'Assam Agricultural University Pig Farm', address: 'Khanapara, Guwahati, Assam 781022, India' },
+  { name: 'Atoz Farm', address: 'Sayestanagar, North 24 Parganas, West Bengal 743427, India' },
+  { name: 'Baba Pigry Farm', address: 'Punjab, India' },
+  { name: 'Barki Devi Pig Farm', address: 'NH19, Barakatha, Jharkhand, India' },
+  { name: 'Bethlehem Rabbit Farm & Agricultural (Pig Unit)', address: 'India' },
+  { name: 'Bihar Animal Sciences University Pig Farm', address: 'Patna, Bihar 800014, India' },
+  { name: 'Bishop Braddy Agro Farm', address: 'Fatehpur, Uttar Pradesh 212652, India' },
+  { name: 'Bobby Piggery Farm', address: 'India' },
+  { name: 'Brothers Agriculture & Farming Company', address: 'Bistupur, Jamshedpur, Jharkhand, India' },
+  { name: 'Budheswar Soren Pig Farm', address: 'Mayurbhanj, Odisha 757040, India' },
+  { name: 'Ccube Pig Farm', address: 'Chokkasandra, Bengaluru, Karnataka 560099, India' },
+  { name: 'Chaudhary Pig Farm', address: 'Naraura, Bulandshahr, Uttar Pradesh, India' },
+  { name: 'Devsatya Farms Pvt Ltd', address: 'Farrukhabad, Uttar Pradesh 209601, India' },
+  { name: 'Diyan Livestock Pig Farm', address: 'Village Kot, Dadri, Uttar Pradesh, India' },
+  { name: 'Dumbi Hembrom Pig Farm', address: 'West Singhbhum, Jharkhand, India' },
+  { name: 'Farmers Universe Pigg Farm', address: 'Jharkhand, India' },
+  { name: 'Five Square Agro Pig Farm', address: 'Raigarh, Chhattisgarh, India' },
+  { name: 'Gitanjali Farm (Pig Unit)', address: 'India' },
+  { name: 'GK Farms (Pig Farming Unit)', address: 'Coimbatore, Tamil Nadu, India' },
+  { name: 'Government Livestock Farm (Pig Unit)', address: 'Hisar, Haryana 125004, India' },
+  { name: 'Government Pig Breeding Farm – Kanke', address: 'Kanke, Ranchi, Jharkhand 834006, India' },
+  { name: 'Government Pig Breeding Farm – Khanapara', address: 'Khanapara, Guwahati, Assam 781022, India' },
+  { name: 'Government Pig Breeding Farm – Medziphema', address: 'Medziphema, Dimapur, Nagaland 797106, India' },
+  { name: 'Government Pig Farm – Agartala', address: 'Agartala, Tripura 799001, India' },
+  { name: 'Government Pig Farm – Aizawl', address: 'Aizawl, Mizoram 796001, India' },
+  { name: 'Government Pig Farm – Bhubaneswar', address: 'Bhubaneswar, Odisha 751003, India' },
+  { name: 'Government Pig Farm – Byrnihat', address: 'Byrnihat, Ri-Bhoi, Meghalaya 793101, India' },
+  { name: 'Government Pig Farm – Gangtok', address: 'Gangtok, Sikkim 737101, India' },
+  { name: 'Government Pig Farm – Imphal', address: 'Imphal, Manipur 795004, India' },
+  { name: 'Government Pig Farm – Itanagar', address: 'Itanagar, Arunachal Pradesh 791111, India' },
+  { name: 'Government Pig Farm – Kalyani', address: 'Kalyani, Nadia, West Bengal 741235, India' },
+  { name: 'Government Pig Farm – Patna', address: 'Patna, Bihar 800014, India' },
+  { name: 'HOSH Farms Pig Unit', address: 'Vizianagaram, Andhra Pradesh 535006, India' },
+  { name: 'HPS Piggery Farm', address: 'Char Brahmanagar, Nadia, West Bengal 741301, India' },
+  { name: 'ICAR – CCARI Pig Unit', address: 'Ela, Old Goa, Goa 403402, India' },
+  { name: 'ICAR – CIARI Pig Farm', address: 'Port Blair, Andaman & Nicobar Islands 744101, India' },
+  { name: 'ICAR – ERS Pig Farm', address: 'Kalyani, Nadia, West Bengal 741235, India' },
+  { name: 'ICAR – IVRI Pig Farm', address: 'Izatnagar, Bareilly, Uttar Pradesh 243122, India' },
+  { name: 'ICAR – NRC on Pig', address: 'Rani, Guwahati, Kamrup, Assam 781131, India' },
+  { name: 'ICAR – RCNEH Pig Unit', address: 'Umiam, Barapani, Meghalaya 793103, India' },
+  { name: 'Irene Piggery', address: 'Lawngtlai, Mizoram, India' },
+  { name: 'Jaswant Pig Farm', address: 'Dhaulana, Ghaziabad, Uttar Pradesh, India' },
+  { name: 'JB Agro & Livestock', address: 'Nadia, West Bengal, India' },
+  { name: 'Joy Baba Lokenath Piggery Firm', address: 'Bongaon, West Bengal 743245, India' },
+  { name: 'K.K Pig Breeding Farm & Training Centre', address: 'Ranchi, Jharkhand 835303, India' },
+  { name: 'Kaimur & Umang Piggery Group', address: 'Bihar, India' },
+  { name: 'Kamboj Pig Farm', address: 'India' },
+  { name: 'Karnal Swine Breeding Farm', address: 'Karnal, Haryana 132037, India' },
+  { name: 'Kerala Veterinary and Animal Sciences University Pig Farm', address: 'Mannuthy, Thrissur, Kerala 680651, India' },
+  { name: 'Khushi Livestock Pig Farm', address: 'India' },
+  { name: 'Maa Kali Pig Farm', address: 'North 24 Parganas, West Bengal, India' },
+  { name: 'Maa Piggery Bhollakash', address: 'Bhollakash, India' },
+  { name: 'Mina Pork Meat Pig Farm', address: 'North 24 Parganas, West Bengal, India' },
+  { name: 'Mizoram University Pig Farm', address: 'Aizawl, Mizoram 796004, India' },
+  { name: 'Monu Sree Pig Farm', address: 'Chakdaha, West Bengal 741248, India' },
+  { name: 'Murmu Enterprise Pig Farm', address: 'Jharkhand, India' },
+  { name: 'Nagaland University Pig Farm', address: 'Medziphema, Dimapur, Nagaland 797106, India' },
+  { name: 'Narsanda Pig Farm', address: 'Jharkhand, India' },
+  { name: 'Narsing Farm', address: 'Ranchi, Jharkhand, India' },
+  { name: 'New Jyoti Foundation Pig Farm', address: 'Jharkhand, India' },
+  { name: 'Om Sai Piggery Farm', address: 'Jharkhand, India' },
+  { name: 'Padangka Livestock Farm', address: 'Chukuniapara, Assam 781135, India' },
+  { name: 'Paras Farma Pig Unit', address: 'India' },
+  { name: 'Pig Farming Training & Research Institute of India Farm', address: 'Helencha, Bongaon, West Bengal 743270, India' },
+  { name: 'Pradhan Pig Farming', address: 'Jamulanda, India' },
+  { name: 'Raghuvanshi Pig Farm', address: 'Noida, Uttar Pradesh 201304, India' },
+  { name: 'Raj Kumar Piggery Farm', address: 'Kamalpur, Punjab 147101, India' },
+  { name: 'Rana Pig Farm', address: 'Pindaura Jahangeerpur, India' },
+  { name: 'Sagar Livestock Pig Farm', address: 'Yamunanagar, Haryana 135133, India' },
+  { name: 'Sai Agro Pig Farm', address: 'Daund, Maharashtra 412207, India' },
+  { name: 'SKUAST Pig Farm', address: 'Jammu, Jammu & Kashmir 180009, India' },
+  { name: 'Snow White Piggery', address: 'Jharkhand, India' },
+  { name: 'SS Piggery Farm', address: 'Majhola, Moradabad, Uttar Pradesh 244001, India' },
+  { name: 'Suvojit Pig Farm', address: 'Sayestanagar, North 24 Parganas, West Bengal, India' },
+  { name: 'Sure Farm Pig Unit', address: 'Dehradun, Uttarakhand 248002, India' },
+  { name: 'TANUVAS Pig Farm', address: 'Madhavaram, Chennai, Tamil Nadu 600051, India' },
+  { name: 'Tripura Veterinary College Pig Farm', address: 'Agartala, Tripura 799006, India' },
+  { name: 'Universal Piggery', address: 'India' },
+  { name: 'Vikas Kumar Agro Livestock Farm', address: 'Patna, Bihar, India' },
+  { name: 'Vikas Livestock Pig Farm', address: 'Saharanpur, Uttar Pradesh 247001, India' },
+  { name: 'West Bengal University of Animal & Fishery Sciences Pig Farm', address: 'Mohanpur, Nadia, West Bengal 741252, India' },
   { name: 'Other', address: '' },
 ];
 
-const farmDropdown      = $('farm-dropdown');
-const farmTrigger       = $('farm-trigger');
-const farmTriggerTxt    = $('farm-trigger-text');
-const farmPanel         = $('farm-panel');
-const farmSearchEl      = $('farm-search');
-const farmListEl        = $('farm-list');
-const farmHiddenName    = $('reg-farm-name');
-const farmHiddenAddr    = $('reg-farm-address');
-const farmAddrDisplay   = $('farm-address-display');
-const farmOtherWrap     = $('farm-other-wrap');
-const farmOtherName     = $('farm-other-name');
-const farmOtherAddress  = $('farm-other-address');
+const farmDropdown = $('farm-dropdown');
+const farmTrigger = $('farm-trigger');
+const farmTriggerTxt = $('farm-trigger-text');
+const farmPanel = $('farm-panel');
+const farmSearchEl = $('farm-search');
+const farmListEl = $('farm-list');
+const farmHiddenName = $('reg-farm-name');
+const farmHiddenAddr = $('reg-farm-address');
+const farmAddrDisplay = $('farm-address-display');
+const farmOtherWrap = $('farm-other-wrap');
+const farmOtherName = $('farm-other-name');
+const farmOtherAddress = $('farm-other-address');
 
 function renderFarmList(filter = '') {
   const q = filter.toLowerCase().trim();
@@ -1015,17 +1281,17 @@ function selectFarm(farm) {
   const farmAddrSection = $('farm-address-section');
 
   if (farm.name === 'Other') {
-    farmHiddenName.value  = '';
-    farmHiddenAddr.value  = '';
+    farmHiddenName.value = '';
+    farmHiddenAddr.value = '';
     if (farmAddrSection) farmAddrSection.classList.add('hidden');
     farmAddrDisplay.textContent = '';
     farmOtherWrap.classList.remove('hidden');
-    farmOtherName.value   = '';
+    farmOtherName.value = '';
     farmOtherAddress.value = '';
     farmOtherName.focus();
   } else {
-    farmHiddenName.value  = farm.name;
-    farmHiddenAddr.value  = farm.address;
+    farmHiddenName.value = farm.name;
+    farmHiddenAddr.value = farm.address;
     farmOtherWrap.classList.add('hidden');
     // Show auto-filled address with heading
     farmAddrDisplay.textContent = farm.address;
@@ -1034,7 +1300,7 @@ function selectFarm(farm) {
   closeFarmPanel();
 }
 
-farmOtherName.addEventListener('input',    () => { farmHiddenName.value = farmOtherName.value.trim(); });
+farmOtherName.addEventListener('input', () => { farmHiddenName.value = farmOtherName.value.trim(); });
 farmOtherAddress.addEventListener('input', () => { farmHiddenAddr.value = farmOtherAddress.value.trim(); });
 
 function openFarmPanel() {
@@ -1063,14 +1329,14 @@ document.addEventListener('click', (e) => {
 
 function resetFarmDropdown() {
   farmTriggerTxt.textContent = 'Select a farm…';
-  farmHiddenName.value  = '';
-  farmHiddenAddr.value  = '';
+  farmHiddenName.value = '';
+  farmHiddenAddr.value = '';
   farmTrigger.classList.remove('has-value', 'invalid', 'open');
   const farmAddrSection = $('farm-address-section');
   if (farmAddrSection) farmAddrSection.classList.add('hidden');
   farmAddrDisplay.textContent = '';
   farmOtherWrap.classList.add('hidden');
-  farmOtherName.value    = '';
+  farmOtherName.value = '';
   farmOtherAddress.value = '';
   closeFarmPanel();
 }
@@ -1143,8 +1409,8 @@ regForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  const submitBtn     = $('reg-submit');
-  const submitText    = $('reg-submit-text');
+  const submitBtn = $('reg-submit');
+  const submitText = $('reg-submit-text');
   const submitSpinner = $('reg-spinner');
 
   submitBtn.disabled = true;
@@ -1152,17 +1418,17 @@ regForm.addEventListener('submit', async (e) => {
   submitSpinner.classList.remove('hidden');
 
   const fd = new FormData();
-  fd.append('pig_name',     $('reg-pig-name').value.trim());
-  fd.append('dob',          $('reg-dob').value);
-  fd.append('breed',        $('reg-breed').value.trim());
-  fd.append('farm_name',    $('reg-farm-name').value.trim());
+  fd.append('pig_name', $('reg-pig-name').value.trim());
+  fd.append('dob', $('reg-dob').value);
+  fd.append('breed', $('reg-breed').value.trim());
+  fd.append('farm_name', $('reg-farm-name').value.trim());
   fd.append('farm_address', $('reg-farm-address').value.trim());
-  fd.append('vaccinated',   regVaccinated.checked ? 'true' : 'false');
+  fd.append('vaccinated', regVaccinated.checked ? 'true' : 'false');
   fd.append('vaccine_date', $('reg-vaccine-date').value);
   selectedFiles.forEach(f => fd.append('image', f));
 
   try {
-    const res  = await fetch(`${BASE_URL}/upload`, {
+    const res = await fetch(`${BASE_URL}/upload`, {
       method: 'POST',
       headers: { 'x-api-key': API_KEY },
       body: fd,
@@ -1239,7 +1505,7 @@ async function doSearch(q) {
   $('search-empty').classList.add('hidden');
 
   try {
-    const res  = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(q)}`, {
+    const res = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(q)}`, {
       signal: AbortSignal.timeout(35000),
       headers: { 'x-api-key': API_KEY },
     });

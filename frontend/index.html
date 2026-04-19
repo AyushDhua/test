@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pigo Care — Farm Management Dashboard</title>
-  <meta name="description" content="Pigo Care — A professional pig farm management system. Register, track, search, and update pig records with ease." />
+  <meta name="description"
+    content="Pigo Care — A professional pig farm management system. Register, track, search, and update pig records with ease." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
   <!-- SIDEBAR -->
@@ -25,19 +29,28 @@
     <nav class="sidebar-nav">
       <a href="#" class="nav-item active" data-view="registry" id="nav-registry">
         <span class="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M9 21V9" />
+          </svg>
         </span>
         <span>DataBase</span>
       </a>
       <a href="#" class="nav-item" data-view="register" id="nav-register">
         <span class="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v8M8 12h8" />
+          </svg>
         </span>
         <span>Register Pig</span>
       </a>
       <a href="#" class="nav-item" data-view="search" id="nav-search">
         <span class="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
         </span>
         <span>Search</span>
       </a>
@@ -57,12 +70,18 @@
     <!-- TOP BAR -->
     <header class="topbar">
       <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
       </button>
       <div class="topbar-title" id="topbar-title">Pig DataBase</div>
       <div class="topbar-actions">
         <button class="btn btn-primary" id="topbar-add-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
           Register Pig
         </button>
       </div>
@@ -91,27 +110,46 @@
       </div>
 
       <div class="toolbar">
-        <!-- Left: search + reload -->
+        <!-- Left: search removed -->
         <div class="toolbar-left">
-          <div class="quick-search">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="registry-filter" placeholder="Filter by name…" autocomplete="off" />
-          </div>
-          <button class="reload-btn" id="registry-reload-btn" title="Refresh database">
-            <svg id="reload-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          </button>
         </div>
 
-        <!-- Right: view toggle -->
+        <!-- Right: view toggle + reload + filter -->
         <div class="toolbar-right">
           <div class="view-toggle">
             <button class="view-mode-btn active" id="grid-btn" title="Grid view">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+              </svg>
             </button>
             <button class="view-mode-btn" id="list-btn" title="List view">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
             </button>
           </div>
+          <button class="reload-btn" id="registry-reload-btn" title="Refresh database">
+            <svg id="reload-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.2">
+              <path d="M23 4v6h-6" />
+              <path d="M1 20v-6h6" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          </button>
+          <button class="filter-btn" id="registry-filter-btn" title="Filter database">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            <span class="filter-badge hidden" id="filter-active-indicator"></span>
+          </button>
         </div>
       </div>
 
@@ -139,12 +177,17 @@
 
           <!-- Image Upload -->
           <div class="form-section">
-            <h3 class="form-section-title">Pig Photos <span style="font-weight:400;font-size:12px;color:var(--text-muted)">(up to 5 images)</span></h3>
+            <h3 class="form-section-title">Pig Photos <span
+                style="font-weight:400;font-size:12px;color:var(--text-muted)">(up to 5 images)</span></h3>
             <div class="image-upload-zone" id="upload-zone">
               <input type="file" id="reg-image" name="image" accept="image/*" multiple required class="file-input" />
               <div class="upload-placeholder" id="upload-placeholder">
                 <div class="upload-icon">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17,8 12,3 7,8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
                 </div>
                 <p class="upload-text">Drop images here or <span>browse</span></p>
                 <p class="upload-hint">JPG, PNG, WEBP · Max 5 images · 10MB each</p>
@@ -175,11 +218,18 @@
                 <div class="breed-dropdown" id="breed-dropdown">
                   <button type="button" class="breed-trigger" id="breed-trigger">
                     <span id="breed-trigger-text">Select a breed…</span>
-                    <svg class="breed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6,9 12,15 18,9"/></svg>
+                    <svg class="breed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.2">
+                      <polyline points="6,9 12,15 18,9" />
+                    </svg>
                   </button>
                   <div class="breed-panel hidden" id="breed-panel">
                     <div class="breed-search-wrap">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                      </svg>
                       <input type="text" id="breed-search" placeholder="Search breeds…" autocomplete="off" />
                     </div>
                     <ul class="breed-list" id="breed-list"></ul>
@@ -188,7 +238,8 @@
                 <!-- Hidden input carries the actual value to FormData -->
                 <input type="hidden" id="reg-breed" name="breed" />
                 <!-- Shown only when 'Other' is selected -->
-                <input type="text" id="breed-other-input" class="breed-other-input hidden" placeholder="Enter breed name…" autocomplete="off" />
+                <input type="text" id="breed-other-input" class="breed-other-input hidden"
+                  placeholder="Enter breed name…" autocomplete="off" />
               </div>
             </div>
           </div>
@@ -202,11 +253,18 @@
                 <div class="breed-dropdown" id="farm-dropdown">
                   <button type="button" class="breed-trigger" id="farm-trigger">
                     <span id="farm-trigger-text">Select a farm…</span>
-                    <svg class="breed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6,9 12,15 18,9"/></svg>
+                    <svg class="breed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.2">
+                      <polyline points="6,9 12,15 18,9" />
+                    </svg>
                   </button>
                   <div class="breed-panel hidden" id="farm-panel">
                     <div class="breed-search-wrap">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                      </svg>
                       <input type="text" id="farm-search" placeholder="Search farms…" autocomplete="off" />
                     </div>
                     <ul class="breed-list" id="farm-list"></ul>
@@ -219,12 +277,15 @@
                 </div>
                 <!-- Other: custom name + address inputs -->
                 <div class="farm-other-wrap hidden" id="farm-other-wrap">
-                  <input type="text" id="farm-other-name"    class="breed-other-input" placeholder="Enter farm name…"    autocomplete="off" />
-                  <label class="farm-address-label" style="margin-top:12px">Farm Address <span class="required">*</span></label>
-                  <input type="text" id="farm-other-address" class="breed-other-input" placeholder="Enter farm address…" autocomplete="off" />
+                  <input type="text" id="farm-other-name" class="breed-other-input" placeholder="Enter farm name…"
+                    autocomplete="off" />
+                  <label class="farm-address-label" style="margin-top:12px">Farm Address <span
+                      class="required">*</span></label>
+                  <input type="text" id="farm-other-address" class="breed-other-input" placeholder="Enter farm address…"
+                    autocomplete="off" />
                 </div>
                 <!-- Hidden inputs carry values to FormData -->
-                <input type="hidden" id="reg-farm-name"    name="farm_name" />
+                <input type="hidden" id="reg-farm-name" name="farm_name" />
                 <input type="hidden" id="reg-farm-address" name="farm_address" />
               </div>
             </div>
@@ -272,16 +333,26 @@
 
       <div class="search-bar-wrap">
         <div class="search-bar">
-          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
           <input type="text" id="search-input" placeholder="Search pigs…" autocomplete="off" />
           <button class="search-clear hidden" id="search-clear">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
       </div>
 
       <div class="search-hint" id="search-hint">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
         <p>Type at least 2 characters to search</p>
       </div>
 
@@ -300,10 +371,127 @@
   <div class="modal-overlay hidden" id="modal-overlay"></div>
   <div class="modal hidden" id="pig-modal">
     <button class="modal-close" id="modal-close" aria-label="Close">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
     </button>
     <div class="modal-body" id="modal-body">
       <!-- injected by JS -->
+    </div>
+  </div>
+
+  <!-- ===== FILTER MODAL ===== -->
+  <div class="modal-overlay hidden" id="filter-overlay"></div>
+  <div class="modal hidden" id="filter-modal">
+    <button class="modal-close" id="filter-close" aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+    <div class="modal-body filter-modal-body">
+      <div class="modal-header filter-modal-header">
+        <h2 class="modal-title">Filters</h2>
+      </div>
+
+      <div class="modal-scroll-area filter-scroll-area">
+        <!-- Vaccinated Status -->
+        <div class="filter-modal-section">
+          <label class="filter-section-title">VACCINATION STATUS</label>
+          <div class="filter-modal-divider"></div>
+          <div class="filter-segmented-group" id="filter-vaccinated-group">
+            <button class="filter-segment active" data-val="all">All</button>
+            <button class="filter-segment" data-val="true">Vaccinated</button>
+            <button class="filter-segment" data-val="false">Non-Vaccinated</button>
+          </div>
+        </div>
+
+        <!-- Breed -->
+        <div class="filter-modal-section">
+          <label class="filter-section-title">BREED</label>
+          <div class="filter-modal-divider"></div>
+          <div class="input-wrap filter-dropdown-wrap">
+            <div class="breed-dropdown" id="filter-breed-dropdown">
+              <button type="button" class="breed-trigger" id="filter-breed-trigger">
+                <span id="filter-breed-trigger-text">All Breeds</span>
+                <svg class="breed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.2">
+                  <polyline points="6,9 12,15 18,9" />
+                </svg>
+              </button>
+              <div class="breed-panel hidden" id="filter-breed-panel">
+                <div class="breed-search-wrap">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                  </svg>
+                  <input type="text" id="filter-breed-search" placeholder="Search breeds…" autocomplete="off" />
+                </div>
+                <!-- Extra top item for clear -->
+                <ul class="breed-list" id="filter-breed-list">
+                  <li class="breed-option active" data-val="">All Breeds</li>
+                  <!-- Rest populated by JS -->
+                </ul>
+              </div>
+            </div>
+            <input type="hidden" id="filter-breed-val" value="" />
+          </div>
+        </div>
+
+        <!-- Farm -->
+        <div class="filter-modal-section">
+          <label class="filter-section-title">FARM</label>
+          <div class="filter-modal-divider"></div>
+          <div class="input-wrap filter-dropdown-wrap">
+            <div class="breed-dropdown" id="filter-farm-dropdown">
+              <button type="button" class="breed-trigger" id="filter-farm-trigger">
+                <span id="filter-farm-trigger-text">All Farms</span>
+                <svg class="breed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.2">
+                  <polyline points="6,9 12,15 18,9" />
+                </svg>
+              </button>
+              <div class="breed-panel hidden" id="filter-farm-panel">
+                <div class="breed-search-wrap">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                  </svg>
+                  <input type="text" id="filter-farm-search" placeholder="Search farms…" autocomplete="off" />
+                </div>
+                <ul class="breed-list" id="filter-farm-list">
+                  <li class="breed-option active" data-val="">All Farms</li>
+                  <!-- Rest populated by JS -->
+                </ul>
+              </div>
+            </div>
+            <input type="hidden" id="filter-farm-val" value="" />
+          </div>
+        </div>
+
+        <!-- DOB -->
+        <div class="filter-modal-section">
+          <label class="filter-section-title">DATE OF BIRTH BETWEEN</label>
+          <div class="filter-modal-divider"></div>
+          <div class="filter-date-row">
+            <div class="input-wrap filter-dropdown-wrap">
+              <input type="date" id="filter-dob-start" class="form-input" />
+            </div>
+            <span class="date-separator">to</span>
+            <div class="input-wrap filter-dropdown-wrap">
+              <input type="date" id="filter-dob-end" class="form-input" />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer filter-modal-footer">
+        <button type="button" class="btn filter-btn-clear" id="filter-clear">Clear All</button>
+        <button type="button" class="btn filter-btn-apply" id="filter-apply">Show Results</button>
+      </div>
     </div>
   </div>
 
@@ -312,4 +500,5 @@
 
   <script src="app.js"></script>
 </body>
+
 </html>
