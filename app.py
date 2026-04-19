@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from sqlalchemy import text
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app, origins=["*"])  # Allow all origins for production
@@ -53,6 +54,7 @@ class Pig(db.Model):
     vaccine_date = db.Column(db.String(50), nullable=True)
     breed = db.Column(db.String(100), nullable=False)
     image = db.Column(db.Text, nullable=False)  # JSON array of Cloudinary URLs
+    registration_date = db.Column(db.String(50), default=lambda: datetime.now().strftime("%Y-%m-%d %I:%M %p"), nullable=True)
 
     def to_dict(self):
         # Parse images — supports legacy single URL and new JSON array
@@ -74,6 +76,7 @@ class Pig(db.Model):
             'breed': self.breed,
             'image': images[0] if images else '',  # first image (backward compat)
             'images': images,                        # all images
+            'registration_date': self.registration_date,
         }
 
 # Create database tables automatically
@@ -87,6 +90,15 @@ with app.app_context():
         print("[Migration] image column widened to TEXT ✓")
     except Exception as e:
         print(f"[Migration] Note: {e} (column may already be TEXT — OK)")
+        
+    # Add registration_date column if it doesn't exist
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(text("ALTER TABLE pig ADD COLUMN registration_date VARCHAR(50)"))
+            conn.commit()
+        print("[Migration] registration_date column added ✓")
+    except Exception as e:
+        print(f"[Migration] Note: {e} (column may already exist — OK)")
 
 
 @app.route("/")
@@ -154,6 +166,8 @@ def upload_pig():
         image_json = json.dumps(image_urls)
 
         # 6. Store metadata in database
+        from datetime import datetime
+        now_str = datetime.now().strftime("%b %d, %Y (%I:%M %p)")
         new_pig = Pig(
             pig_name=pig_name,
             pig_id=pig_id,
@@ -163,7 +177,8 @@ def upload_pig():
             vaccinated=vaccinated,
             vaccine_date=vaccine_date,
             breed=breed,
-            image=image_json
+            image=image_json,
+            registration_date=now_str
         )
         db.session.add(new_pig)
         db.session.commit()

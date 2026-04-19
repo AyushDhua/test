@@ -650,6 +650,10 @@ function openPigModal(pig, editMode = false) {
           <div class="detail-label">Farm Address</div>
           <div class="detail-value">${esc(pig.farm_address)}</div>
         </div>
+        <div class="detail-item" style="grid-column:1/-1">
+          <div class="detail-label">Registration Date</div>
+          <div class="detail-value">${pig.registration_date ? esc(pig.registration_date) : 'Legacy Record'}</div>
+        </div>
       </div>
 
       <div class="modal-actions">
