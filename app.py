@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from sqlalchemy import text
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 app = Flask(__name__)
 CORS(app, origins=["*"])  # Allow all origins for production
@@ -54,7 +54,7 @@ class Pig(db.Model):
     vaccine_date = db.Column(db.String(50), nullable=True)
     breed = db.Column(db.String(100), nullable=False)
     image = db.Column(db.Text, nullable=False)  # JSON array of Cloudinary URLs
-    registration_date = db.Column(db.String(50), default=lambda: datetime.now().strftime("%Y-%m-%d %I:%M %p"), nullable=True)
+    registration_date = db.Column(db.String(50), default=lambda: datetime.now(timezone(timedelta(hours=5, minutes=30))).strftime("%d/%m/%Y %H:%M:%S"), nullable=True)
 
     def to_dict(self):
         # Parse images — supports legacy single URL and new JSON array
@@ -166,8 +166,9 @@ def upload_pig():
         image_json = json.dumps(image_urls)
 
         # 6. Store metadata in database
-        from datetime import datetime
-        now_str = datetime.now().strftime("%b %d, %Y (%I:%M %p)")
+        from datetime import datetime, timezone, timedelta
+        ist = timezone(timedelta(hours=5, minutes=30))
+        now_str = datetime.now(ist).strftime("%d/%m/%Y %H:%M:%S")
         new_pig = Pig(
             pig_name=pig_name,
             pig_id=pig_id,
